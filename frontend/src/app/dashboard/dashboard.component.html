@@ -1,0 +1,177 @@
+<div class="dashboard-container">
+  <!-- Banner Section with Search -->
+  <div class="banner-section">
+    <div class="banner-content">
+      <h1 class="banner-title">Recruitment Portal</h1>
+      <p class="banner-subtitle">Find the perfect candidates for your organization</p>
+      
+      <!-- Search Bar -->
+      <div class="search-container">
+        <div class="search-wrapper">
+          <div class="search-header">
+            <h3 class="search-title">Find Your Perfect Opportunity</h3>
+            <p class="search-subtitle">Search through available positions using keywords, skills, or experience level</p>
+          </div>
+          
+          <div class="search-form">
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-label>Search vacancies...</mat-label>
+              <input
+                matInput
+                [(ngModel)]="searchTerm"
+                (input)="onSearchChange()"
+                placeholder="Job title, skills, recruiter, or keywords..."
+              />
+              <mat-icon matPrefix class="search-prefix-icon">search</mat-icon>
+              <button mat-icon-button matSuffix *ngIf="searchTerm" (click)="clearSearch()" class="clear-button">
+                <mat-icon>close</mat-icon>
+              </button>
+            </mat-form-field>
+            
+            <div class="search-filters">
+              <mat-chip-set class="filter-chips">
+                <mat-chip-option 
+                  *ngFor="let level of jobLevels" 
+                  [selected]="selectedJobLevel === level"
+                  (click)="filterByJobLevel(level)"
+                  class="filter-chip">
+                  {{ level }}
+                </mat-chip-option>
+              </mat-chip-set>
+              
+              <button mat-stroked-button (click)="resetFilters()" class="reset-filters" *ngIf="hasActiveFilters()">
+                <mat-icon>refresh</mat-icon>
+                Reset Filters
+              </button>
+            </div>
+          </div>
+          
+          <div class="search-stats" *ngIf="searchTerm || hasActiveFilters()">
+            <mat-icon class="stats-icon">info</mat-icon>
+            <span class="stats-text">
+              Found {{ totalItems }} {{ totalItems === 1 ? 'vacancy' : 'vacancies' }}
+              <span *ngIf="searchTerm"> for "<strong>{{ searchTerm }}</strong>"</span>
+              <span *ngIf="selectedJobLevel"> in {{ selectedJobLevel }} level</span>
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Vacancies Table Section -->
+  <div class="table-section">
+    <mat-card class="table-card">
+      <mat-card-header>
+        <mat-card-title>Available Vacancies</mat-card-title>
+        <mat-card-subtitle>
+          Showing {{ paginatedVacancies.length }} of {{ totalItems }} vacancies
+        </mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="table-container">
+          <table mat-table [dataSource]="paginatedVacancies" class="vacancies-table">
+            
+            <!-- Job ID Column -->
+            <ng-container matColumnDef="jobId">
+              <th mat-header-cell *matHeaderCellDef>Job ID</th>
+              <td mat-cell *matCellDef="let vacancy">
+                <span class="job-id-link" (click)="viewVacancyDetails(vacancy.jobId)">
+                  {{ vacancy.jobId }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Job Title Column -->
+            <ng-container matColumnDef="jobTitle">
+              <th mat-header-cell *matHeaderCellDef>Job Title</th>
+              <td mat-cell *matCellDef="let vacancy" class="job-title">{{ vacancy.jobTitle }}</td>
+            </ng-container>
+
+            <!-- Job Description Column -->
+            <ng-container matColumnDef="jobDescription">
+              <th mat-header-cell *matHeaderCellDef>Job Description</th>
+              <td mat-cell *matCellDef="let vacancy" class="job-description">
+                {{ vacancy.jobDescription }}
+              </td>
+            </ng-container>
+
+            <!-- Job Level Column -->
+            <ng-container matColumnDef="jobLevel">
+              <th mat-header-cell *matHeaderCellDef>Job Level</th>
+              <td mat-cell *matCellDef="let vacancy">
+                <span class="job-level" [ngClass]="getJobLevelClass(vacancy.jobLevel)">
+                  {{ vacancy.jobLevel }}
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Experience Column -->
+            <ng-container matColumnDef="experience">
+              <th mat-header-cell *matHeaderCellDef>Experience</th>
+              <td mat-cell *matCellDef="let vacancy">{{ vacancy.experience }}</td>
+            </ng-container>
+
+            <!-- Open Positions Column -->
+            <ng-container matColumnDef="openPositions">
+              <th mat-header-cell *matHeaderCellDef>Open Positions</th>
+              <td mat-cell *matCellDef="let vacancy" class="positions-count">
+                {{ vacancy.openPositions }}
+              </td>
+            </ng-container>
+
+            <!-- Recruiter Column -->
+            <ng-container matColumnDef="recruiter">
+              <th mat-header-cell *matHeaderCellDef>Recruiter</th>
+              <td mat-cell *matCellDef="let vacancy">{{ vacancy.recruiter }}</td>
+            </ng-container>
+
+            <!-- Primary Skills Column -->
+            <ng-container matColumnDef="primarySkills">
+              <th mat-header-cell *matHeaderCellDef>Primary Skills</th>
+              <td mat-cell *matCellDef="let vacancy" class="skills-cell">
+                <mat-chip-set>
+                  <mat-chip *ngFor="let skill of vacancy.primarySkills.slice(0, 3)" class="primary-skill">
+                    {{ skill }}
+                  </mat-chip>
+                  <mat-chip *ngIf="vacancy.primarySkills.length > 3" class="more-skills">
+                    +{{ vacancy.primarySkills.length - 3 }} more
+                  </mat-chip>
+                </mat-chip-set>
+              </td>
+            </ng-container>
+
+            <!-- Secondary Skills Column -->
+            <ng-container matColumnDef="secondarySkills">
+              <th mat-header-cell *matHeaderCellDef>Secondary Skills</th>
+              <td mat-cell *matCellDef="let vacancy" class="skills-cell">
+                <mat-chip-set>
+                  <mat-chip *ngFor="let skill of vacancy.secondarySkills.slice(0, 2)" class="secondary-skill">
+                    {{ skill }}
+                  </mat-chip>
+                  <mat-chip *ngIf="vacancy.secondarySkills.length > 2" class="more-skills">
+                    +{{ vacancy.secondarySkills.length - 2 }} more
+                  </mat-chip>
+                </mat-chip-set>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <mat-paginator
+          [length]="totalItems"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="[5, 10, 20, 50]"
+          [pageIndex]="pageIndex"
+          (page)="onPageChange($event)"
+          showFirstLastButtons>
+        </mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>
