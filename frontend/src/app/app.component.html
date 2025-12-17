@@ -5,14 +5,53 @@
       <span>Recruitment Portal</span>
     </div>
     <div class="nav-links">
-      <a mat-button routerLink="/dashboard" routerLinkActive="active">
+      <button
+        matButton
+        [matMenuTriggerFor]="vacanciesMenu"
+        #vacancyMenuTrigger="matMenuTrigger"
+        (mouseover)="vacancyMenuTrigger.openMenu()"
+      >
         <mat-icon>dashboard</mat-icon>
-        Dashboard
-      </a>
-      <a mat-button routerLink="/profiles" routerLinkActive="active">
-        <mat-icon>people</mat-icon>
-        Profiles
-      </a>
+        Vacancy
+      </button>
+      <button
+        matButton
+        [matMenuTriggerFor]="candidatesMenu"
+        #candidateMenuTrigger="matMenuTrigger"
+        (mouseover)="candidateMenuTrigger.openMenu()"
+      >
+        <mat-icon>person</mat-icon>
+        Candidate
+      </button>
+
+      <mat-menu #vacanciesMenu="matMenu" class="dropdown-menu" >
+        <span (mouseleave)="vacancyMenuTrigger.closeMenu()">
+          <button mat-menu-item routerLink="/vacancy/search" class="menu-item">
+          <mat-icon>search</mat-icon>
+          <span>Search Vacancy</span>
+        </button>
+        <button mat-menu-item routerLink="/vacancy/create" class="menu-item">
+          <mat-icon>add</mat-icon>
+          <span>Create Vacancy</span>
+        </button>
+        <button mat-menu-item routerLink="/vacancy/upload" class="menu-item">
+          <mat-icon>upload_file</mat-icon>
+          <span>Upload File</span>
+        </button>
+        </span>
+      </mat-menu>
+      <mat-menu #candidatesMenu="matMenu" class="dropdown-menu">
+        <span (mouseleave)="candidateMenuTrigger.closeMenu()">
+        <button mat-menu-item routerLink="/candidate/search" class="menu-item">
+          <mat-icon>search</mat-icon>
+          <span>Search Candidate</span>
+        </button>
+        <button mat-menu-item routerLink="/candidate/create" class="menu-item">
+          <mat-icon>add</mat-icon>
+          <span>Create Candidate</span>
+        </button>
+        </span>
+      </mat-menu>
     </div>
   </div>
 </nav>

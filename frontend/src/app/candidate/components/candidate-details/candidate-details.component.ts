@@ -11,8 +11,8 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
 
-import { CandidateProfile, CANDIDATE_PROFILES_MOCK_DATA } from '../shared/data/candidate-profiles-mock-data';
-import { Vacancy, VACANCY_MOCK_DATA } from '../shared/data/vacancy-mock-data';
+import { CandidateProfile, CANDIDATE_PROFILES_MOCK_DATA } from '../../../shared/data/candidate-profiles-mock-data';
+import { Vacancy, VACANCY_MOCK_DATA } from '../../../shared/data/vacancy-mock-data';
 
 @Component({
   selector: 'app-candidate-details',
@@ -114,7 +114,7 @@ export class CandidateDetailsComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/profiles']);
+    this.router.navigate(['/candidates']);
   }
 
   getScoreClass(score: number): string {

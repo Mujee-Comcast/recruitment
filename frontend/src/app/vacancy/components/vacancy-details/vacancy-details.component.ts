@@ -11,8 +11,8 @@ import { MatBadgeModule } from '@angular/material/badge';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 
-import { Vacancy, VACANCY_MOCK_DATA } from '../shared/data/vacancy-mock-data';
-import { CandidateProfile, CANDIDATE_PROFILES_MOCK_DATA } from '../shared/data/candidate-profiles-mock-data';
+import { Vacancy, VACANCY_MOCK_DATA } from '../../../shared/data/vacancy-mock-data';
+import { CandidateProfile, CANDIDATE_PROFILES_MOCK_DATA } from '../../../shared/data/candidate-profiles-mock-data';
 
 @Component({
   selector: 'app-vacancy-details',
@@ -174,7 +174,7 @@ export class VacancyDetailsComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/vacancies']);
   }
 
   shareJob(): void {

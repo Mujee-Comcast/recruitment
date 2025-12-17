@@ -1,0 +1,219 @@
+<div class="profiles-container">
+  <!-- Upload Section -->
+  <div class="upload-section">
+    <div class="upload-content">
+      <h1 class="upload-title">Candidate Profiles</h1>
+      <p class="upload-subtitle">Upload resumes to automatically extract candidate information</p>
+      
+      <!-- Resume Upload Card -->
+      <mat-card class="upload-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>cloud_upload</mat-icon>
+            Upload Resume
+          </mat-card-title>
+          <mat-card-subtitle>
+            Upload a PDF resume to automatically extract candidate profile
+          </mat-card-subtitle>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <div class="upload-area">
+            <input
+              type="file"
+              id="resumeUpload"
+              accept=".pdf"
+              (change)="onFileSelected($event)"
+              style="display: none"
+            />
+            
+            <div class="file-upload-zone" (click)="openFileDialog()">
+              <mat-icon class="upload-icon">description</mat-icon>
+              <p class="upload-text">
+                {{ selectedFile ? selectedFile.name : 'Click to select a PDF resume' }}
+              </p>
+              <p class="upload-hint">Supported format: PDF (Max 10MB)</p>
+            </div>
+            
+            <div class="upload-actions" *ngIf="selectedFile">
+              <button
+                mat-raised-button
+                color="primary"
+                (click)="onUploadResume()"
+                [disabled]="isUploading"
+              >
+                <mat-icon>upload</mat-icon>
+                {{ isUploading ? 'Processing...' : 'Upload & Process' }}
+              </button>
+            </div>
+            
+            <mat-progress-bar
+              *ngIf="isUploading"
+              mode="determinate"
+              [value]="uploadProgress"
+              class="upload-progress"
+            ></mat-progress-bar>
+          </div>
+        </mat-card-content>
+      </mat-card>
+      
+      <!-- Search Bar -->
+      <div class="search-container">
+        <mat-form-field appearance="outline" class="search-field">
+          <mat-label>Search profiles...</mat-label>
+          <input
+            matInput
+            [(ngModel)]="searchTerm"
+            (input)="onSearchChange()"
+            placeholder="Search by name, role, skills, email..."
+          />
+          <mat-icon matSuffix>search</mat-icon>
+        </mat-form-field>
+      </div>
+    </div>
+  </div>
+
+  <!-- Profiles Table Section -->
+  <div class="table-section">
+    <mat-card class="table-card">
+      <mat-card-header>
+        <div class="header-content">
+          <div>
+            <mat-card-title>Candidate Profiles</mat-card-title>
+            <mat-card-subtitle>
+              Showing {{ paginatedProfiles.length }} of {{ totalItems }} profiles
+            </mat-card-subtitle>
+          </div>
+          <div class="header-actions">
+            <button mat-raised-button color="primary" (click)="navigateToCreate()" class="create-button">
+              <mat-icon>person_add</mat-icon>
+              Create New Candidate
+            </button>
+          </div>
+        </div>
+      </mat-card-header>
+
+      <mat-card-content>
+        <div class="table-container">
+          <table mat-table [dataSource]="paginatedProfiles" class="profiles-table">
+            
+            <!-- Candidate ID Column -->
+            <ng-container matColumnDef="candidateId">
+              <th mat-header-cell *matHeaderCellDef>Candidate ID</th>
+              <td mat-cell *matCellDef="let profile" class="candidate-id">
+                <a (click)="viewCandidateDetails(profile.id)" class="candidate-id-link">
+                  {{ profile.id }}
+                </a>
+              </td>
+            </ng-container>
+
+            <!-- Candidate Name Column -->
+            <ng-container matColumnDef="candidateName">
+              <th mat-header-cell *matHeaderCellDef>Candidate Name</th>
+              <td mat-cell *matCellDef="let profile" class="candidate-name">
+                {{ profile.candidateName }}
+              </td>
+            </ng-container>
+
+            <!-- Role Column -->
+            <ng-container matColumnDef="role">
+              <th mat-header-cell *matHeaderCellDef>Role</th>
+              <td mat-cell *matCellDef="let profile" class="role">
+                {{ profile.role }}
+              </td>
+            </ng-container>
+
+            <!-- ATS Score Column -->
+            <ng-container matColumnDef="atsScore">
+              <th mat-header-cell *matHeaderCellDef>ATS Score</th>
+              <td mat-cell *matCellDef="let profile" class="ats-score">
+                <span class="score-badge" [ngClass]="getAtsScoreClass(profile.atsScore)">
+                  {{ profile.atsScore }}%
+                </span>
+              </td>
+            </ng-container>
+
+            <!-- Profile Summary Column -->
+            <ng-container matColumnDef="profileSummary">
+              <th mat-header-cell *matHeaderCellDef>Profile Summary</th>
+              <td mat-cell *matCellDef="let profile" class="profile-summary">
+                {{ getTruncatedSummary(profile.profileSummary, 120) }}
+              </td>
+            </ng-container>
+
+            <!-- Overall Experience Column -->
+            <ng-container matColumnDef="overallExperience">
+              <th mat-header-cell *matHeaderCellDef>Experience</th>
+              <td mat-cell *matCellDef="let profile" class="experience">
+                {{ profile.overallExperience }}
+              </td>
+            </ng-container>
+
+            <!-- Primary Skills Column -->
+            <ng-container matColumnDef="primarySkills">
+              <th mat-header-cell *matHeaderCellDef>Primary Skills</th>
+              <td mat-cell *matCellDef="let profile" class="skills-cell">
+                <mat-chip-set>
+                  <mat-chip *ngFor="let skill of profile.primarySkills.slice(0, 3)" class="primary-skill">
+                    {{ skill }}
+                  </mat-chip>
+                  <mat-chip *ngIf="profile.primarySkills.length > 3" class="more-skills">
+                    +{{ profile.primarySkills.length - 3 }} more
+                  </mat-chip>
+                </mat-chip-set>
+              </td>
+            </ng-container>
+
+            <!-- Secondary Skills Column -->
+            <ng-container matColumnDef="secondarySkills">
+              <th mat-header-cell *matHeaderCellDef>Secondary Skills</th>
+              <td mat-cell *matCellDef="let profile" class="skills-cell">
+                <mat-chip-set>
+                  <mat-chip *ngFor="let skill of profile.secondarySkills.slice(0, 2)" class="secondary-skill">
+                    {{ skill }}
+                  </mat-chip>
+                  <mat-chip *ngIf="profile.secondarySkills.length > 2" class="more-skills">
+                    +{{ profile.secondarySkills.length - 2 }} more
+                  </mat-chip>
+                </mat-chip-set>
+              </td>
+            </ng-container>
+
+            <!-- Email Column -->
+            <ng-container matColumnDef="email">
+              <th mat-header-cell *matHeaderCellDef>Email</th>
+              <td mat-cell *matCellDef="let profile" class="email">
+                <a [href]="'mailto:' + profile.email" class="email-link">
+                  {{ profile.email }}
+                </a>
+              </td>
+            </ng-container>
+
+            <!-- Mobile Number Column -->
+            <ng-container matColumnDef="mobileNumber">
+              <th mat-header-cell *matHeaderCellDef>Mobile</th>
+              <td mat-cell *matCellDef="let profile" class="mobile">
+                <a [href]="'tel:' + profile.mobileNumber" class="phone-link">
+                  {{ profile.mobileNumber }}
+                </a>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <mat-paginator
+          [length]="totalItems"
+          [pageSize]="pageSize"
+          [pageSizeOptions]="[5, 10, 20, 50]"
+          [pageIndex]="pageIndex"
+          (page)="onPageChange($event)"
+          showFirstLastButtons>
+        </mat-paginator>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

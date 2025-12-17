@@ -14,6 +14,7 @@
           </div>
           
           <div class="search-form">
+            <!-- Main Search Bar -->
             <mat-form-field appearance="outline" class="search-field">
               <mat-label>Search vacancies...</mat-label>
               <input
@@ -27,23 +28,114 @@
                 <mat-icon>close</mat-icon>
               </button>
             </mat-form-field>
-            
-            <div class="search-filters">
-              <mat-chip-set class="filter-chips">
-                <mat-chip-option 
-                  *ngFor="let level of jobLevels" 
-                  [selected]="selectedJobLevel === level"
-                  (click)="filterByJobLevel(level)"
-                  class="filter-chip">
-                  {{ level }}
-                </mat-chip-option>
-              </mat-chip-set>
+
+            <!-- Advanced Filters Toggle -->
+            <div class="filter-toggle-section">
+              <button 
+                mat-stroked-button 
+                (click)="toggleAdvancedFilters()" 
+                class="toggle-filters-btn"
+                [class.active]="showAdvancedFilters">
+                <mat-icon>tune</mat-icon>
+                Advanced Filters
+                <!-- <span *ngIf="getActiveFilterCount() > 0" class="filter-badge">{{ getActiveFilterCount() }}</span> -->
+                <mat-icon class="expand-icon" [class.rotated]="showAdvancedFilters">expand_more</mat-icon>
+              </button>
               
-              <button mat-stroked-button (click)="resetFilters()" class="reset-filters" *ngIf="hasActiveFilters()">
+              <button 
+                mat-stroked-button 
+                (click)="resetFilters()" 
+                class="reset-filters" 
+                *ngIf="hasActiveFilters()">
                 <mat-icon>refresh</mat-icon>
-                Reset Filters
+                Reset All Filters
               </button>
             </div>
+
+            <!-- Advanced Filters Panel -->
+            <mat-expansion-panel 
+              [expanded]="showAdvancedFilters" 
+              class="advanced-filters-panel"
+              hideToggle="true">
+              <form [formGroup]="filterForm" class="advanced-filters-form">
+                <div class="filters-grid">
+                  <!-- Job ID Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Job ID</mat-label>
+                    <input 
+                      matInput 
+                      formControlName="jobId"
+                      placeholder="e.g., JOB001">
+                    <mat-icon matPrefix>fingerprint</mat-icon>
+                  </mat-form-field>
+
+                  <!-- Job Title Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Job Title</mat-label>
+                    <input 
+                      matInput 
+                      formControlName="jobTitle"
+                      placeholder="e.g., Frontend Developer">
+                    <mat-icon matPrefix>work</mat-icon>
+                  </mat-form-field>
+
+                  <!-- Job Level Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Job Level</mat-label>
+                    <mat-select formControlName="jobLevel">
+                      <mat-option value="">All Levels</mat-option>
+                      <mat-option *ngFor="let level of jobLevels" [value]="level">
+                        {{ level }}
+                      </mat-option>
+                    </mat-select>
+                    <mat-icon matPrefix>trending_up</mat-icon>
+                  </mat-form-field>
+
+                  <!-- Recruiter Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Recruiter</mat-label>
+                    <mat-select formControlName="recruiter">
+                      <mat-option value="">All Recruiters</mat-option>
+                      <mat-option *ngFor="let recruiter of recruiters" [value]="recruiter">
+                        {{ recruiter }}
+                      </mat-option>
+                    </mat-select>
+                    <mat-icon matPrefix>person</mat-icon>
+                  </mat-form-field>
+
+                  <!-- Skills Filter -->
+                  <mat-form-field appearance="outline" class="filter-field skills-field">
+                    <mat-label>Skills</mat-label>
+                    <mat-select formControlName="skills" multiple>
+                      <mat-option *ngFor="let skill of allSkills" [value]="skill">
+                        {{ skill }}
+                      </mat-option>
+                    </mat-select>
+                    <mat-icon matPrefix>code</mat-icon>
+                  </mat-form-field>
+                </div>
+
+                <!-- Filter Action Buttons -->
+                <div class="filter-actions">
+                  <button 
+                    mat-raised-button 
+                    color="primary" 
+                    (click)="applyFilters()" 
+                    class="apply-btn">
+                    <mat-icon>check</mat-icon>
+                    Apply Filters
+                  </button>
+                  
+                  <button 
+                    mat-stroked-button 
+                    (click)="resetFilters()" 
+                    class="reset-btn">
+                    <mat-icon>clear</mat-icon>
+                    Reset
+                  </button>
+                </div>
+              </form>
+            </mat-expansion-panel>
           </div>
           
           <div class="search-stats" *ngIf="searchTerm || hasActiveFilters()">
@@ -51,7 +143,7 @@
             <span class="stats-text">
               Found {{ totalItems }} {{ totalItems === 1 ? 'vacancy' : 'vacancies' }}
               <span *ngIf="searchTerm"> for "<strong>{{ searchTerm }}</strong>"</span>
-              <span *ngIf="selectedJobLevel"> in {{ selectedJobLevel }} level</span>
+              <span *ngIf="getActiveFilterCount() > 0"> with {{ getActiveFilterCount() }} filter(s) applied</span>
             </span>
           </div>
         </div>
@@ -71,11 +163,11 @@
 
       <mat-card-content>
         <div class="table-container">
-          <table mat-table [dataSource]="paginatedVacancies" class="vacancies-table">
+          <table mat-table [dataSource]="paginatedVacancies" matSort (matSortChange)="sortData($event)" class="vacancies-table">
             
             <!-- Job ID Column -->
             <ng-container matColumnDef="jobId">
-              <th mat-header-cell *matHeaderCellDef>Job ID</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Job ID</th>
               <td mat-cell *matCellDef="let vacancy">
                 <span class="job-id-link" (click)="viewVacancyDetails(vacancy.jobId)">
                   {{ vacancy.jobId }}
@@ -85,7 +177,7 @@
 
             <!-- Job Title Column -->
             <ng-container matColumnDef="jobTitle">
-              <th mat-header-cell *matHeaderCellDef>Job Title</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Job Title</th>
               <td mat-cell *matCellDef="let vacancy" class="job-title">{{ vacancy.jobTitle }}</td>
             </ng-container>
 
@@ -99,7 +191,7 @@
 
             <!-- Job Level Column -->
             <ng-container matColumnDef="jobLevel">
-              <th mat-header-cell *matHeaderCellDef>Job Level</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Job Level</th>
               <td mat-cell *matCellDef="let vacancy">
                 <span class="job-level" [ngClass]="getJobLevelClass(vacancy.jobLevel)">
                   {{ vacancy.jobLevel }}
@@ -109,13 +201,13 @@
 
             <!-- Experience Column -->
             <ng-container matColumnDef="experience">
-              <th mat-header-cell *matHeaderCellDef>Experience</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Experience</th>
               <td mat-cell *matCellDef="let vacancy">{{ vacancy.experience }}</td>
             </ng-container>
 
             <!-- Open Positions Column -->
             <ng-container matColumnDef="openPositions">
-              <th mat-header-cell *matHeaderCellDef>Open Positions</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Open Positions</th>
               <td mat-cell *matCellDef="let vacancy" class="positions-count">
                 {{ vacancy.openPositions }}
               </td>
@@ -123,7 +215,7 @@
 
             <!-- Recruiter Column -->
             <ng-container matColumnDef="recruiter">
-              <th mat-header-cell *matHeaderCellDef>Recruiter</th>
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Recruiter</th>
               <td mat-cell *matCellDef="let vacancy">{{ vacancy.recruiter }}</td>
             </ng-container>
 

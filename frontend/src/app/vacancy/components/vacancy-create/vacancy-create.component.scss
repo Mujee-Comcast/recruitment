@@ -1,0 +1,300 @@
+.vacancy-create-container {
+  max-width: 80vw;
+  margin: 0 auto;
+  padding: 24px;
+  background-color: #fafafa;
+  min-height: 100vh;
+}
+
+.form-header {
+  text-align: center;
+  margin-bottom: 32px;
+  padding: 24px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+
+  h1 {
+    margin: 0 0 12px 0;
+    font-size: 2.5rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+
+    mat-icon {
+      font-size: 2.5rem;
+      height: 2.5rem;
+      width: 2.5rem;
+    }
+  }
+
+  p {
+    margin: 0;
+    font-size: 1.1rem;
+    opacity: 0.9;
+  }
+}
+
+.vacancy-form {
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.form-section {
+  padding: 32px;
+  border-bottom: 1px solid #e0e0e0;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  h2 {
+    margin: 0 0 24px 0;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+
+    mat-icon {
+      color: #667eea;
+      font-size: 1.5rem;
+      height: 1.5rem;
+      width: 1.5rem;
+    }
+  }
+
+  h3 {
+    margin: 0 0 16px 0;
+    font-size: 1.2rem;
+    font-weight: 500;
+    color: #555;
+  }
+}
+
+.form-row {
+  margin-bottom: 20px;
+  
+  &.two-columns {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+  }
+}
+
+.full-width {
+  width: 100%;
+}
+
+// Skills Styling
+.skills-subsection {
+  margin-bottom: 32px;
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.skills-input-container {
+  margin-bottom: 16px;
+}
+
+.skills-input {
+  width: 100%;
+}
+
+.skills-chips {
+  margin-bottom: 12px;
+  
+  mat-chip-set {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+.primary-skill-chip {
+  background-color: #e3f2fd !important;
+  color: #1976d2 !important;
+  
+  mat-icon {
+    color: #1976d2 !important;
+  }
+}
+
+.secondary-skill-chip {
+  background-color: #f3e5f5 !important;
+  color: #7b1fa2 !important;
+  
+  mat-icon {
+    color: #7b1fa2 !important;
+  }
+}
+
+.skills-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  color: #666;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  margin-bottom: 16px;
+  
+  .hint-icon {
+    font-size: 1rem;
+    height: 1rem;
+    width: 1rem;
+    margin-top: 2px;
+    color: #999;
+  }
+}
+
+// Form Actions
+.form-actions {
+  padding: 24px 32px;
+  background-color: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+
+  @media (max-width: 600px) {
+    flex-direction: column-reverse;
+    gap: 12px;
+    
+    button {
+      width: 100%;
+    }
+  }
+}
+
+.cancel-btn {
+  color: #666;
+  border-color: #ddd;
+  
+  &:hover {
+    background-color: #f5f5f5;
+    border-color: #999;
+  }
+}
+
+.submit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  padding: 12px 32px;
+  
+  &:disabled {
+    background: #ccc !important;
+    color: #999 !important;
+  }
+
+  mat-spinner {
+    margin-right: 8px;
+  }
+  
+  mat-icon:not(.mat-spinner) {
+    margin-right: 8px;
+  }
+}
+
+// Material Form Field Customizations
+.mat-mdc-form-field {
+  .mat-mdc-text-field-wrapper {
+    background-color: #fafafa;
+    border-radius: 8px;
+  }
+  
+  &.mat-focused {
+    .mat-mdc-text-field-wrapper {
+      background-color: white;
+    }
+  }
+}
+
+.mat-mdc-form-field-hint-wrapper,
+.mat-mdc-form-field-error-wrapper {
+  padding: 0 16px;
+  font-size: 0.85rem;
+}
+
+// Loading States
+.mat-mdc-raised-button {
+  &:disabled {
+    opacity: 0.6;
+  }
+}
+
+// Responsive Design
+@media (max-width: 768px) {
+  .vacancy-create-container {
+    padding: 16px;
+  }
+  
+  .form-header {
+    padding: 20px;
+    margin-bottom: 24px;
+    
+    h1 {
+      font-size: 2rem;
+      flex-direction: column;
+      gap: 8px;
+      
+      mat-icon {
+        font-size: 2rem;
+        height: 2rem;
+        width: 2rem;
+      }
+    }
+    
+    p {
+      font-size: 1rem;
+    }
+  }
+  
+  .form-section {
+    padding: 24px 20px;
+    
+    h2 {
+      font-size: 1.3rem;
+      margin-bottom: 20px;
+    }
+  }
+  
+  .form-actions {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 480px) {
+  .vacancy-create-container {
+    padding: 12px;
+  }
+  
+  .form-header {
+    padding: 16px;
+    
+    h1 {
+      font-size: 1.8rem;
+    }
+  }
+  
+  .form-section {
+    padding: 20px 16px;
+  }
+  
+  .form-actions {
+    padding: 16px;
+  }
+}

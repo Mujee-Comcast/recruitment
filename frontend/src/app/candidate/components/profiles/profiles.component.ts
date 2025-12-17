@@ -13,8 +13,9 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatSnackBar, MatSnackBarModule } from '@angular/material/snack-bar';
+import { CandidateProfile, CANDIDATE_PROFILES_MOCK_DATA } from '../../../shared/data/candidate-profiles-mock-data';
 
-import { CandidateProfile, CANDIDATE_PROFILES_MOCK_DATA } from '../shared/data/candidate-profiles-mock-data';
+
 
 @Component({
   selector: 'app-profiles',

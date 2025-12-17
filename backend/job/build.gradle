@@ -29,6 +29,11 @@ dependencies {
 	implementation 'javax.xml.bind:jaxb-api:2.3.1'
 	implementation 'com.fasterxml.jackson.core:jackson-databind'
 	implementation 'org.slf4j:slf4j-api:2.0.7'
+	implementation 'software.amazon.awssdk:s3:2.20.68'
+	implementation 'software.amazon.awssdk:auth:2.20.68'
+	implementation 'org.apache.pdfbox:pdfbox:2.0.29'
+	implementation 'com.azure:azure-ai-openai:1.0.0-beta.8'
+	implementation 'com.azure:azure-core:1.45.0'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

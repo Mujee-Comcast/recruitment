@@ -30,10 +30,11 @@ public class CandidateImplService implements CandidateService {
 
     @Override
     public Candidate createCandidate(Candidate candidate) throws Exception {
-        String candidateID = idGenerator.generateID(IDGenerator.EntityType.CANDIDATE);
-        candidate.setCandidateID(candidateID);
-        
         try {
+            if(candidate.getCandidateID() == null || candidate.getCandidateID().isEmpty()) {
+                String candidateID = idGenerator.generateID(IDGenerator.EntityType.CANDIDATE);
+                candidate.setCandidateID(candidateID);
+            }
             Candidate savedCandidate = this.candidateDAO.save(candidate);
             try {
                 searchSyncService.syncCandidate(savedCandidate);

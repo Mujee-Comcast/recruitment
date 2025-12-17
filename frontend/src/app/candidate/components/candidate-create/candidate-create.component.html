@@ -1,0 +1,379 @@
+<div class="candidate-create-container">
+  <div class="form-header">
+    <h1>
+      <mat-icon>person_add</mat-icon>
+      Create New Candidate
+    </h1>
+    <p>Upload resume to auto-fill candidate information or enter details manually</p>
+  </div>
+
+  <form [formGroup]="candidateForm" (ngSubmit)="onSubmit()" class="candidate-form">
+    
+    <!-- Resume Upload Section - First -->
+    <div class="form-section">
+      <h2>
+        <mat-icon>attach_file</mat-icon>
+        Resume Upload
+      </h2>
+      
+      <div class="upload-area">
+        <input type="file" 
+               #fileInput 
+               (change)="onFileSelected($event)" 
+               accept=".pdf,.doc,.docx"
+               style="display: none;">
+        
+        <div class="file-upload-zone" 
+             (click)="fileInput.click()"
+             (dragover)="onDragOver($event)"
+             (dragleave)="onDragLeave($event)"
+             (drop)="onDrop($event)"
+             [class.drag-over]="isDragOver">
+          <mat-icon class="upload-icon">cloud_upload</mat-icon>
+          <div class="upload-text">
+            <p *ngIf="!selectedFile" class="primary-text">Drop resume here or click to browse</p>
+            <p *ngIf="selectedFile" class="file-selected">
+              <mat-icon>description</mat-icon>
+              {{selectedFile.name}}
+            </p>
+            <p class="secondary-text">Supported formats: PDF, DOC, DOCX (Max 10MB)</p>
+            <p class="help-text">Resume data will be automatically parsed to fill the form below</p>
+          </div>
+        </div>
+        
+        <div class="upload-actions" *ngIf="selectedFile">
+          <button type="button" mat-raised-button color="primary" class="parse-button" (click)="parseResume()">
+            <mat-icon>auto_fix_high</mat-icon>
+            Parse Resume & Auto-fill
+          </button>
+          <button type="button" mat-raised-button color="warn" (click)="removeFile()">
+            <mat-icon>delete</mat-icon>
+            Remove File
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Personal Information Section -->
+    <div class="form-section">
+      <h2>
+        <mat-icon>person</mat-icon>
+        Personal Information
+      </h2>
+      
+      <div class="field-group">
+        <mat-form-field appearance="outline">
+          <mat-label>Full Name *</mat-label>
+          <input matInput formControlName="candidateName" placeholder="Enter candidate's full name">
+          <mat-icon matSuffix>person</mat-icon>
+          <mat-error *ngIf="candidateForm.get('candidateName')?.hasError('required')">
+            Full name is required
+          </mat-error>
+          <mat-error *ngIf="candidateForm.get('candidateName')?.hasError('minlength')">
+            Name must be at least 2 characters
+          </mat-error>
+        </mat-form-field>
+
+        <div class="field-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Email Address *</mat-label>
+            <input matInput formControlName="email" type="email" placeholder="candidate@example.com">
+            <mat-icon matSuffix>email</mat-icon>
+            <mat-error *ngIf="candidateForm.get('email')?.hasError('required')">
+              Email is required
+            </mat-error>
+            <mat-error *ngIf="candidateForm.get('email')?.hasError('email')">
+              Please enter a valid email address
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Mobile Number *</mat-label>
+            <input matInput formControlName="mobileNumber" 
+                   placeholder="+1234567890" 
+                   type="tel"
+                   pattern="[+]?[0-9]+"
+                   (keypress)="onMobileKeyPress($event)">
+            <mat-icon matSuffix>phone</mat-icon>
+            <mat-error *ngIf="candidateForm.get('mobileNumber')?.hasError('required')">
+              Mobile number is required
+            </mat-error>
+            <mat-error *ngIf="candidateForm.get('mobileNumber')?.hasError('pattern')">
+              Please enter a valid phone number (numbers only with optional +)
+            </mat-error>
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+
+    <!-- Professional Information Section -->
+    <div class="form-section">
+      <h2>
+        <mat-icon>work</mat-icon>
+        Professional Information
+      </h2>
+      
+      <div class="field-group">
+        <div class="field-row">
+          <mat-form-field appearance="outline">
+            <mat-label>Role *</mat-label>
+            <input matInput formControlName="role" placeholder="e.g., Senior Software Engineer">
+            <mat-icon matSuffix>badge</mat-icon>
+            <mat-error *ngIf="candidateForm.get('role')?.hasError('required')">
+              Role is required
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Overall Experience *</mat-label>
+            <input matInput formControlName="overallExperience" placeholder="e.g., 5+ years">
+            <mat-icon matSuffix>timeline</mat-icon>
+            <mat-error *ngIf="candidateForm.get('overallExperience')?.hasError('required')">
+              Experience is required
+            </mat-error>
+          </mat-form-field>
+        </div>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Profile Summary *</mat-label>
+          <textarea matInput formControlName="profileSummary" 
+                   placeholder="Brief summary of the candidate's background, skills, and career highlights..."
+                   rows="4">
+          </textarea>
+          <mat-icon matSuffix>description</mat-icon>
+          <mat-error *ngIf="candidateForm.get('profileSummary')?.hasError('required')">
+            Profile summary is required
+          </mat-error>
+          <mat-error *ngIf="candidateForm.get('profileSummary')?.hasError('minlength')">
+            Summary must be at least 50 characters
+          </mat-error>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <!-- Skills Section -->
+    <div class="form-section">
+      <h2>
+        <mat-icon>psychology</mat-icon>
+        Skills & Expertise
+      </h2>
+      
+      <div class="field-group">
+        <div class="skills-input-row">
+          <mat-form-field appearance="outline" class="skill-input-field">
+            <mat-label>Primary Skills *</mat-label>
+            <input matInput formControlName="primarySkillsInput" 
+                   placeholder="Type a skill (e.g., JavaScript, React, Node.js)"
+                   (keydown.enter)="addPrimarySkill($event)">
+            <mat-hint>Press Enter or click + to add skills</mat-hint>
+          </mat-form-field>
+          <button type="button" 
+                  mat-icon-button 
+                  color="primary" 
+                  class="add-skill-button"
+                  (click)="addPrimarySkillFromButton()">
+            <mat-icon>add_circle</mat-icon>
+          </button>
+        </div>
+        
+        <div class="skills-display" *ngIf="primarySkills.length > 0">
+          <mat-chip-set>
+            <mat-chip *ngFor="let skill of primarySkills; let i = index" 
+                     class="primary-skill-chip"
+                     (removed)="removePrimarySkill(i)">
+              {{skill}}
+              <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+
+        <div class="skills-input-row">
+          <mat-form-field appearance="outline" class="skill-input-field">
+            <mat-label>Secondary Skills</mat-label>
+            <input matInput formControlName="secondarySkillsInput" 
+                   placeholder="Type a skill (e.g., Git, Agile, Docker)"
+                   (keydown.enter)="addSecondarySkill($event)">
+            <mat-hint>Press Enter or click + to add skills</mat-hint>
+          </mat-form-field>
+          <button type="button" 
+                  mat-icon-button 
+                  color="primary" 
+                  class="add-skill-button"
+                  (click)="addSecondarySkillFromButton()">
+            <mat-icon>add_circle_outline</mat-icon>
+          </button>
+        </div>
+        
+        <div class="skills-display" *ngIf="secondarySkills.length > 0">
+          <mat-chip-set>
+            <mat-chip *ngFor="let skill of secondarySkills; let i = index" 
+                     class="secondary-skill-chip"
+                     (removed)="removeSecondarySkill(i)">
+              {{skill}}
+              <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </div>
+    </div>
+
+    <!-- Work Experience Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <h2>
+          <mat-icon>business_center</mat-icon>
+          Work Experience
+        </h2>
+        <button type="button" mat-raised-button color="accent" (click)="addWorkExperience()">
+          <mat-icon>add</mat-icon>
+          Add Experience
+        </button>
+      </div>
+      
+      <div class="field-group">
+        <div formArrayName="workExperience">
+          <div *ngFor="let experience of workExperienceControls; let i = index" 
+               class="experience-card" 
+               [formGroupName]="i">
+            <div class="card-header">
+              <h3>Experience {{i + 1}}</h3>
+              <button type="button" mat-icon-button color="warn" 
+                      (click)="removeWorkExperience(i)"
+                      [disabled]="workExperienceControls.length === 1">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+            
+            <div class="field-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Company</mat-label>
+                <input matInput formControlName="company" placeholder="Company name">
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline">
+                <mat-label>Position</mat-label>
+                <input matInput formControlName="position" placeholder="Job title">
+              </mat-form-field>
+            </div>
+            
+            <div class="field-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Start Date</mat-label>
+                <input matInput formControlName="startDate" type="date">
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline">
+                <mat-label>End Date</mat-label>
+                <input matInput formControlName="endDate" type="date">
+                <mat-hint>Leave empty if current position</mat-hint>
+              </mat-form-field>
+            </div>
+            
+            <mat-form-field appearance="outline">
+              <mat-label>Description</mat-label>
+              <textarea matInput formControlName="description" 
+                       placeholder="Key responsibilities and achievements..."
+                       rows="3">
+              </textarea>
+            </mat-form-field>
+          </div>
+        </div>
+        
+        <div *ngIf="workExperienceControls.length === 0" class="empty-state">
+          <mat-icon>work_off</mat-icon>
+          <p>No work experience added yet</p>
+          <button type="button" mat-raised-button color="primary" (click)="addWorkExperience()">
+            Add First Experience
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Education Section -->
+    <div class="form-section">
+      <div class="section-header">
+        <h2>
+          <mat-icon>school</mat-icon>
+          Education
+        </h2>
+        <button type="button" mat-raised-button color="accent" (click)="addEducation()">
+          <mat-icon>add</mat-icon>
+          Add Education
+        </button>
+      </div>
+      
+      <div class="field-group">
+        <div formArrayName="education">
+          <div *ngFor="let edu of educationControls; let i = index" 
+               class="education-card" 
+               [formGroupName]="i">
+            <div class="card-header">
+              <h3>Education {{i + 1}}</h3>
+              <button type="button" mat-icon-button color="warn" 
+                      (click)="removeEducation(i)"
+                      [disabled]="educationControls.length === 1">
+                <mat-icon>delete</mat-icon>
+              </button>
+            </div>
+            
+            <mat-form-field appearance="outline">
+              <mat-label>Institution</mat-label>
+              <input matInput formControlName="institution" placeholder="University/College name">
+            </mat-form-field>
+            
+            <div class="field-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Degree</mat-label>
+                <input matInput formControlName="degree" placeholder="e.g., Bachelor's, Master's">
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline">
+                <mat-label>Field of Study</mat-label>
+                <input matInput formControlName="field" placeholder="e.g., Computer Science">
+              </mat-form-field>
+            </div>
+            
+            <div class="field-row">
+              <mat-form-field appearance="outline">
+                <mat-label>Graduation Year</mat-label>
+                <input matInput formControlName="graduationYear" 
+                       placeholder="2023" 
+                       type="number" 
+                       min="1950" 
+                       max="2030">
+              </mat-form-field>
+              
+              <mat-form-field appearance="outline">
+                <mat-label>Grade (Optional)</mat-label>
+                <input matInput formControlName="grade" placeholder="3.8 GPA or 85%">
+              </mat-form-field>
+            </div>
+          </div>
+        </div>
+        
+        <div *ngIf="educationControls.length === 0" class="empty-state">
+          <mat-icon>school_off</mat-icon>
+          <p>No education added yet</p>
+          <button type="button" mat-raised-button color="primary" (click)="addEducation()">
+            Add Education
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="form-actions">
+      <div class="action-buttons">
+        <button type="button" mat-stroked-button (click)="onCancel()">
+          <mat-icon>cancel</mat-icon>
+          Cancel
+        </button>
+        <button type="submit" mat-raised-button color="primary" 
+                [disabled]="candidateForm.invalid || isSubmitting">
+          <mat-icon>save</mat-icon>
+          {{isSubmitting ? 'Creating...' : 'Create Candidate'}}
+        </button>
+      </div>
+    </div>
+  </form>
+</div>

@@ -36,6 +36,7 @@ public class SearchSyncImplService implements SearchSyncService {
         }
     }
 
+    @Override
     public void syncAllCandidates() {
         try {
             List<Candidate> candidates = candidateDAO.findAll();
@@ -48,6 +49,7 @@ public class SearchSyncImplService implements SearchSyncService {
         }
     }
 
+    @Override
     public void syncAllVacancies() {
         try {
             List<Vacancy> vacancies = vacancyDAO.findAll();
@@ -60,6 +62,7 @@ public class SearchSyncImplService implements SearchSyncService {
         }
     }
 
+    @Override
     public void syncCandidate(Candidate candidate) {
         try {
             CandidateDocument document = CandidateDocument.fromCandidate(candidate);
@@ -69,6 +72,7 @@ public class SearchSyncImplService implements SearchSyncService {
         }
     }
 
+    @Override
     public void syncVacancy(Vacancy vacancy) {
         try {
             VacancyDocument document = VacancyDocument.fromVacancy(vacancy);
@@ -78,6 +82,7 @@ public class SearchSyncImplService implements SearchSyncService {
         }
     }
 
+    @Override
     public void deleteCandidateFromSearch(String candidateId) {
         try {
             searchService.deleteCandidateById(candidateId);
@@ -86,6 +91,7 @@ public class SearchSyncImplService implements SearchSyncService {
         }
     }
 
+    @Override
     public void deleteVacancyFromSearch(String vacancyId) {
         try {
             searchService.deleteVacancyById(vacancyId);

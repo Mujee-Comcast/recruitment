@@ -29,7 +29,6 @@ public class Candidate extends Audit {
     private String id;
 
     @Field("candidateID")
-    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String candidateID;
 
     @Field("firstName")

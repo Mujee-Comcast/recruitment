@@ -36,7 +36,7 @@ services:
   # OpenSearch Dashboards
   opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:2.15.0
-    container_name: opensearch-dashboards
+    container_name: opensearch-dashboards1
     ports:
       - 5601:5601
     expose:
@@ -63,6 +63,23 @@ services:
       MONGO_INITDB_DATABASE: recruitment
     volumes:
       - mongodb-data:/data/db
+    networks:
+      - opensearch-net
+
+  # LocalStack for AWS S3
+  localstack:
+    container_name: localstack1
+    image: localstack/localstack:3.0
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - HOSTNAME=localstack
+      - HOSTNAME_EXTERNAL=localstack
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
     networks:
       - opensearch-net
 

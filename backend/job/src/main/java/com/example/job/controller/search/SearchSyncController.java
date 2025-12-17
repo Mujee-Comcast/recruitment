@@ -10,7 +10,6 @@ import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/search/sync")
-@CrossOrigin(origins = "*")
 public class SearchSyncController {
 
     @Autowired
