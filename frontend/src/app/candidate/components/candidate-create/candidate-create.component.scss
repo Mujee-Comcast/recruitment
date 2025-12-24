@@ -1,42 +1,46 @@
 .candidate-create-container {
-  width: 100%;
-  margin: 0;
+  max-width: 80vw;
+  margin: 0 auto;
   padding: 24px;
-  background: #fafafa;
+  background-color: #fafafa;
   min-height: 100vh;
 
   .form-header {
+    text-align: center;
     margin-bottom: 32px;
-    padding: 0;
+    padding: 24px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 16px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 
     h1 {
+      margin: 0 0 12px 0;
+      font-size: 2.5rem;
+      font-weight: 600;
       display: flex;
       align-items: center;
-      gap: 12px;
-      margin: 0 0 8px 0;
-      font-size: 28px;
-      font-weight: 600;
-      color: #1a1a1a;
+      justify-content: center;
+      gap: 16px;
 
       mat-icon {
-        font-size: 32px;
-        color: #667eea;
+        font-size: 2.5rem;
+        height: 2.5rem;
+        width: 2.5rem;
       }
     }
 
     p {
       margin: 0;
-      color: #666;
-      font-size: 16px;
-      line-height: 1.5;
+      font-size: 1.1rem;
+      opacity: 0.9;
     }
   }
 }
 
 .candidate-form {
-  max-width: 1200px;
   margin: 0 auto;
-  
+
   .form-section {
     background: white;
     border-radius: 12px;
@@ -339,158 +343,74 @@
     }
   }
 
-  // Form Actions
-  .form-actions {
-    background: white;
-    border-radius: 12px;
-    padding: 32px;
-    margin-top: 24px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    border: 1px solid #e0e0e0;
-    max-width: 1200px;
-    margin-left: auto;
-    margin-right: auto;
+// Form Actions
+.form-actions {
+  padding: 24px 32px;
+  background-color: #f8f9fa;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 0;
 
-    .action-buttons {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-
-      button {
-        min-width: 120px;
-        height: 44px;
-        font-weight: 500;
-        border-radius: 8px;
-
-        &[color="primary"] {
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-          color: white;
-          box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
-
-          &:hover {
-            box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-            transform: translateY(-1px);
-          }
-
-          &:disabled {
-            background: #ccc;
-            box-shadow: none;
-            transform: none;
-          }
-        }
-
-        &[color="accent"] {
-          background: #17a2b8;
-          color: white;
-        }
-
-        mat-icon {
-          margin-right: 8px;
-        }
-      }
+  @media (max-width: 600px) {
+    flex-direction: column-reverse;
+    gap: 12px;
+    
+    button {
+      width: 100%;
     }
   }
 }
 
-// Responsive Design
-@media (max-width: 1024px) {
-  .candidate-form {
-    max-width: 900px;
-    
-    .form-section {
-      padding: 28px;
-    }
-    
-    .form-actions {
-      max-width: 900px;
-      padding: 28px;
-    }
+.cancel-btn {
+  color: #666;
+  border-color: #ddd;
+  
+  &:hover {
+    background-color: #f5f5f5;
+    border-color: #999;
   }
 }
 
-@media (max-width: 768px) {
-  .candidate-create-container {
-    padding: 16px;
-
-    .form-header {
-      margin-bottom: 24px;
-
-      h1 {
-        font-size: 24px;
-
-        mat-icon {
-          font-size: 28px;
-        }
-      }
-    }
+.submit-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 600;
+  padding: 12px 32px;
+  
+  &:disabled {
+    background: #ccc !important;
+    color: #999 !important;
   }
 
-  .candidate-form {
-    max-width: 100%;
-    
-    .form-section {
-      padding: 20px;
-
-      .field-row {
-        grid-template-columns: 1fr;
-        gap: 16px;
-      }
-
-      .skills-input-row {
-        grid-template-columns: 1fr;
-        gap: 12px;
-
-        .add-skill-button {
-          margin-top: 0;
-          justify-self: start;
-        }
-      }
-
-      .section-header {
-        flex-direction: column;
-        gap: 16px;
-        align-items: stretch;
-      }
-    }
-
-    .form-actions {
-      max-width: 100%;
-      padding: 20px;
-
-      .action-buttons {
-        flex-direction: column;
-
-        button {
-          width: 100%;
-        }
-      }
-    }
-
-    .experience-card,
-    .education-card {
-      .field-row {
-        grid-template-columns: 1fr;
-      }
-    }
+  mat-spinner {
+    margin-right: 8px;
   }
+  
+  mat-icon:not(.mat-spinner) {
+    margin-right: 8px;
+  }
+}
 
-  .upload-area {
-    .file-upload-zone {
-      padding: 24px 16px;
-
-      .upload-icon {
-        font-size: 36px;
-      }
-    }
-
-    .upload-actions {
-      flex-direction: column;
+// Material Form Field Customizations
+.mat-mdc-form-field {
+  .mat-mdc-text-field-wrapper {
+    background-color: #fafafa;
+    border-radius: 8px;
+  }
+  
+  &.mat-focused {
+    .mat-mdc-text-field-wrapper {
+      background-color: white;
     }
   }
 }
+}
+
 
 // Form validation animations
 .mat-mdc-form-field.ng-invalid.ng-touched {
+
   .mdc-notched-outline__leading,
   .mdc-notched-outline__notch,
   .mdc-notched-outline__trailing {

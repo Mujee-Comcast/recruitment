@@ -1,25 +1,30 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
+import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatSelectModule } from '@angular/material/select';
 import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
 import { MatTableModule } from '@angular/material/table';
 import { Router } from '@angular/router';
-import { CandidateProfile, CANDIDATE_PROFILES_MOCK_DATA } from '../../../shared/data/candidate-profiles-mock-data';
+import { ApiService } from '../../../shared/services/api.service';
+import { CandidateSearchRequest, CandidateSearchFilter, CandidateSearchResponse } from '../../../shared/interfaces/candidate-search.interface';
+
 
 @Component({
   selector: 'app-candidate-search',
   imports: [
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     MatCardModule,
     MatTableModule,
     MatPaginatorModule,
@@ -30,7 +35,9 @@ import { CandidateProfile, CANDIDATE_PROFILES_MOCK_DATA } from '../../../shared/
     MatButtonModule,
     MatProgressBarModule,
     MatBadgeModule,
-    MatSnackBarModule
+    MatSnackBarModule,
+    MatSelectModule,
+    MatExpansionModule
   ],
   templateUrl: './candidate-search.component.html',
   styleUrl: './candidate-search.component.scss'
@@ -40,7 +47,6 @@ export class CandidateSearchComponent implements OnInit {
     'candidateId',
     'candidateName',
     'role',
-    'atsScore',
     'profileSummary',
     'overallExperience',
     'primarySkills',
@@ -49,15 +55,30 @@ export class CandidateSearchComponent implements OnInit {
     'mobileNumber'
   ];
 
-  allProfiles: CandidateProfile[] = CANDIDATE_PROFILES_MOCK_DATA;
-  filteredProfiles: CandidateProfile[] = [];
-  paginatedProfiles: CandidateProfile[] = [];
+  candidates: any[] = [];
   searchTerm: string = '';
+  isLoading: boolean = false;
+  
+
+
+  // Advanced filter form
+  filterForm: FormGroup;
+  showAdvancedFilters: boolean = false;
+  
+  // Filter options (can be loaded from API or defined statically)
+  allRoles: string[] = ['Frontend Developer', 'Backend Developer', 'Full Stack Developer', 'DevOps Engineer', 'Data Scientist'];
+  experienceLevels: string[] = ['Entry Level (0-1 years)', 'Junior (1-3 years)', 'Mid-level (3-5 years)', 'Senior (5-8 years)', 'Lead/Principal (8+ years)'];
+  allSkills: string[] = ['Angular', 'React', 'Vue', 'TypeScript', 'JavaScript', 'Java', 'Python', 'C#', 'Node.js'];
 
   // Pagination properties
-  pageSize: number = 5;
+  pageSize: number = 10;
   pageIndex: number = 0;
   totalItems: number = 0;
+  totalPages: number = 0;
+
+  // Sorting properties
+  sortField: string = 'totalExperience';
+  sortOrder: 'ASC' | 'DESC' = 'ASC';
 
   // File upload properties
   selectedFile: File | null = null;
@@ -66,60 +87,147 @@ export class CandidateSearchComponent implements OnInit {
 
   constructor(
     private snackBar: MatSnackBar,
-    private router: Router
-  ) {}
-
-  ngOnInit(): void {
-    this.filteredProfiles = [...this.allProfiles];
-    this.totalItems = this.filteredProfiles.length;
-    this.updatePaginatedData();
+    private router: Router,
+    private fb: FormBuilder,
+    private apiService: ApiService
+  ) {
+    this.filterForm = this.fb.group({
+      candidateId: [''],
+      firstName: [''],
+      lastName: [''],
+      email: [''],
+      mobile: [''],
+      role: [''],
+      totalExperience: [''],
+      primarySkills: [''],
+      secondarySkills: [''],
+      summary: [''],
+      certifications: [''],
+      experienceCompany: [''],
+      experiencePosition: [''],
+      educationInstitution: [''],
+      educationDegree: [''],
+      educationFieldOfStudy: [''],
+      educationGraduationYear: ['']
+    });
   }
 
-  onSearchChange(): void {
-    if (!this.searchTerm.trim()) {
-      this.filteredProfiles = [...this.allProfiles];
-    } else {
-      const searchLower = this.searchTerm.toLowerCase();
-      this.filteredProfiles = this.allProfiles.filter(profile =>
-        profile.candidateName.toLowerCase().includes(searchLower) ||
-        profile.role.toLowerCase().includes(searchLower) ||
-        profile.email.toLowerCase().includes(searchLower) ||
-        profile.profileSummary.toLowerCase().includes(searchLower) ||
-        profile.primarySkills.some(skill => skill.toLowerCase().includes(searchLower)) ||
-        profile.secondarySkills.some(skill => skill.toLowerCase().includes(searchLower))
-      );
-    }
+  ngOnInit(): void {
+    // Initial search
+    this.searchCandidates();
+  }
+
+  private buildSearchRequest(): CandidateSearchRequest {
+    const formValues = this.filterForm.value;
     
-    this.totalItems = this.filteredProfiles.length;
-    this.pageIndex = 0; // Reset to first page when searching
-    this.updatePaginatedData();
+    const filter: CandidateSearchFilter = {
+      candidateId: formValues.candidateId?.trim() || null,
+      firstName: formValues.firstName?.trim() || null,
+      lastName: formValues.lastName?.trim() || null,
+      email: formValues.email?.trim() || null,
+      mobile: formValues.mobile?.trim() || null,
+      role: formValues.role || null,
+      totalExperience: formValues.totalExperience || null,
+      primarySkills: this.convertToStringArray(formValues.primarySkills),
+      secondarySkills: this.convertToStringArray(formValues.secondarySkills),
+      summary: formValues.summary?.trim() || null,
+      certifications: formValues.certifications?.trim() || null,
+      experienceCompany: formValues.experienceCompany?.trim() || null,
+      experiencePosition: formValues.experiencePosition?.trim() || null,
+      educationInstitution: formValues.educationInstitution?.trim() || null,
+      educationDegree: formValues.educationDegree?.trim() || null,
+      educationFieldOfStudy: formValues.educationFieldOfStudy?.trim() || null,
+      educationGraduationYear: formValues.educationGraduationYear || null
+    };
+
+    return {
+      searchKey: this.searchTerm.trim(),
+      filter,
+      sortField: this.sortField,
+      sortOrder: this.sortOrder,
+      pageNumber: this.pageIndex,
+      itemsPerPage: this.pageSize
+    };
+  }
+
+  searchCandidates(): void {
+    this.isLoading = true;
+    const searchRequest = this.buildSearchRequest();
+    
+    this.apiService.searchCandidates(searchRequest).subscribe({
+      next: (response: CandidateSearchResponse) => {
+        console.log('API Response:', response); // Debug log
+        this.candidates = response.results;
+        this.totalItems = response.total;
+        this.totalPages = response.totalPages;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error searching candidates:', error);
+        this.isLoading = false;
+        this.snackBar.open('Error searching candidates. Please try again.', 'Close', {
+          duration: 5000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
+  }
+
+
+
+  toggleAdvancedFilters(): void {
+    this.showAdvancedFilters = !this.showAdvancedFilters;
+  }
+
+  applyFilters(): void {
+    this.pageIndex = 0;
+    this.searchCandidates();
+  }
+
+  clearSearch(): void {
+    this.searchTerm = '';
+    this.searchCandidates();
+  }
+
+  resetFilters(): void {
+    this.searchTerm = '';
+    this.filterForm.reset();
+    this.pageIndex = 0;
+    this.searchCandidates();
+  }
+
+  hasActiveFilters(): boolean {
+    const formValues = this.filterForm.value;
+    return this.searchTerm.trim() !== '' ||
+           Object.values(formValues).some(value => value && value.toString().trim() !== '');
+  }
+
+  getActiveFilterCount(): number {
+    const formValues = this.filterForm.value;
+    let count = 0;
+    
+    if (this.searchTerm.trim()) count++;
+    Object.values(formValues).forEach(value => {
+      if (value && value.toString().trim() !== '') count++;
+    });
+    
+    return count;
   }
 
   onPageChange(event: PageEvent): void {
     this.pageSize = event.pageSize;
     this.pageIndex = event.pageIndex;
-    this.updatePaginatedData();
-  }
-
-  private updatePaginatedData(): void {
-    const startIndex = this.pageIndex * this.pageSize;
-    const endIndex = startIndex + this.pageSize;
-    this.paginatedProfiles = this.filteredProfiles.slice(startIndex, endIndex);
+    this.searchCandidates();
   }
 
   getSkillsText(skills: string[]): string {
     return skills.join(', ');
   }
 
-  getAtsScoreClass(score: number): string {
-    if (score >= 90) return 'score-excellent';
-    if (score >= 80) return 'score-good';
-    if (score >= 70) return 'score-average';
-    return 'score-poor';
-  }
-
   viewCandidateDetails(candidateId: string): void {
-    this.router.navigate(['/candidate', candidateId]);
+    this.router.navigateByUrl('/candidate' + `/${candidateId}`);
   }
 
   navigateToCreate(): void {
@@ -179,27 +287,9 @@ export class CandidateSearchComponent implements OnInit {
   private simulateResumeProcessing(): void {
     // Simulate resume processing and candidate profile creation
     setTimeout(() => {
-      const newProfile: CandidateProfile = {
-        id: 'CAND' + String(this.allProfiles.length + 1).padStart(3, '0'),
-        candidateName: 'New Candidate',
-        role: 'Software Developer',
-        atsScore: Math.floor(Math.random() * 30) + 70, // Random score between 70-99
-        profileSummary: 'Profile extracted from uploaded resume. Experienced professional with relevant skills.',
-        overallExperience: Math.floor(Math.random() * 8) + 1 + ' years',
-        primarySkills: ['JavaScript', 'Python', 'SQL'],
-        secondarySkills: ['Git', 'Agile', 'Testing'],
-        email: 'newcandidate@email.com',
-        mobileNumber: '+1-555-' + String(Math.floor(Math.random() * 9000) + 1000),
-        resumeFileName: this.selectedFile!.name,
-        uploadDate: new Date(),
-        workExperience: [],
-        education: [],
-        awards: [],
-        certifications: []
-      };
-
-      this.allProfiles.unshift(newProfile); // Add to beginning of array
-      this.onSearchChange(); // Refresh the filtered data
+      // In a real implementation, you would call an API to upload and process the resume
+      // For now, we'll just refresh the search results
+      this.searchCandidates();
       
       this.isUploading = false;
       this.uploadProgress = 0;
@@ -222,6 +312,16 @@ export class CandidateSearchComponent implements OnInit {
 
   getTruncatedSummary(summary: string, maxLength: number = 100): string {
     return summary.length > maxLength ? summary.substring(0, maxLength) + '...' : summary;
+  }
+
+  private convertToStringArray(value: string | null | undefined): string[] | null {
+    if (!value || !value.trim()) {
+      return null;
+    }
+    return value
+      .split(',')
+      .map(skill => skill.trim())
+      .filter(skill => skill.length > 0);
   }
 }
 

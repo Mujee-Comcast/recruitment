@@ -10,7 +10,8 @@ import { MatChipsModule } from '@angular/material/chips';
 import { MatSelectModule } from '@angular/material/select';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
-import { Vacancy } from '../../../shared/data/vacancy-mock-data';
+import { ApiService } from '../../../shared/services/api.service';
+import { VacancyCreateRequest } from '../../../shared/interfaces/vacancy-search.interface';
 
 @Component({
   selector: 'app-vacancy-create',
@@ -46,35 +47,22 @@ export class VacancyCreateComponent implements OnInit {
     'Director'
   ];
 
-  experienceRanges: string[] = [
-    '0-1 years',
-    '1-2 years',
-    '2-3 years',
-    '3-5 years',
-    '4-6 years',
-    '5-7 years',
-    '5-8 years',
-    '6-8 years',
-    '8+ years',
-    '10+ years'
-  ];
-
-  recruiters: string[] = [
-    'John Smith',
-    'Sarah Johnson',
-    'Mike Davis',
-    'Emily Chen',
-    'Lisa Wang',
-    'David Brown',
-    'Anna Rodriguez',
-    'Tom Wilson',
-    'Jessica Taylor',
-    'Robert Anderson'
+  experienceOptions: { value: number, label: string }[] = [
+    { value: 0, label: '0-1 years' },
+    { value: 1, label: '1-2 years' },
+    { value: 2, label: '2-3 years' },
+    { value: 3, label: '3-5 years' },
+    { value: 4, label: '4-6 years' },
+    { value: 5, label: '5-7 years' },
+    { value: 6, label: '6-8 years' },
+    { value: 8, label: '8+ years' },
+    { value: 10, label: '10+ years' }
   ];
 
   constructor(
     private fb: FormBuilder,
-    private router: Router
+    private router: Router,
+    private apiService: ApiService
   ) {}
 
   ngOnInit() {
@@ -83,10 +71,10 @@ export class VacancyCreateComponent implements OnInit {
 
   private initializeForm() {
     this.vacancyForm = this.fb.group({
-      jobTitle: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
-      jobDescription: ['', [Validators.required, Validators.minLength(50), Validators.maxLength(1000)]],
-      jobLevel: ['', Validators.required],
-      experience: ['', Validators.required],
+      title: ['', [Validators.required, Validators.minLength(3), Validators.maxLength(100)]],
+      description: ['', [Validators.required, Validators.minLength(50), Validators.maxLength(1000)]],
+      level: ['', Validators.required],
+      experience: ['', [Validators.required, Validators.min(0), Validators.max(50)]],
       openPositions: ['', [Validators.required, Validators.min(1), Validators.max(50)]],
       recruiter: ['', Validators.required],
       primarySkillsInput: [''],
@@ -184,9 +172,9 @@ export class VacancyCreateComponent implements OnInit {
 
   private getFieldDisplayName(fieldName: string): string {
     const fieldNames: { [key: string]: string } = {
-      'jobTitle': 'Job Title',
-      'jobDescription': 'Job Description',
-      'jobLevel': 'Job Level',
+      'title': 'Job Title',
+      'description': 'Job Description',
+      'level': 'Job Level',
       'experience': 'Experience Required',
       'openPositions': 'Open Positions',
       'recruiter': 'Recruiter'
@@ -208,26 +196,30 @@ export class VacancyCreateComponent implements OnInit {
 
       this.isSubmitting = true;
 
-      const vacancyData = {
-        jobTitle: this.vacancyForm.value.jobTitle,
-        jobDescription: this.vacancyForm.value.jobDescription,
-        jobLevel: this.vacancyForm.value.jobLevel,
-        experience: this.vacancyForm.value.experience,
+      const vacancyData: VacancyCreateRequest = {
+        title: this.vacancyForm.value.title,
+        description: this.vacancyForm.value.description,
+        level: this.vacancyForm.value.level,
+        experience: this.vacancyForm.value.experience, // This is already a number from the select
         openPositions: parseInt(this.vacancyForm.value.openPositions),
         recruiter: this.vacancyForm.value.recruiter,
         primarySkills: [...this.primarySkills],
         secondarySkills: [...this.secondarySkills]
       };
 
-      // Simulate API call
-      setTimeout(() => {
-        console.log('Vacancy created:', vacancyData);
-        this.isSubmitting = false;
-        
-        // Show success message or navigate
-        alert('Vacancy created successfully!');
-        this.router.navigate(['/vacancy']);
-      }, 2000);
+      this.apiService.createVacancy(vacancyData).subscribe({
+        next: (response) => {
+          console.log('Vacancy created successfully:', response);
+          this.isSubmitting = false;
+          alert('Vacancy created successfully!');
+          this.router.navigateByUrl(`/vacancy/${response.vacancyID}`);
+        },
+        error: (error) => {
+          console.error('Error creating vacancy:', error);
+          this.isSubmitting = false;
+          alert('Error creating vacancy. Please try again.');
+        }
+      });
     } else {
       // Mark all fields as touched to show validation errors
       this.vacancyForm.markAllAsTouched();

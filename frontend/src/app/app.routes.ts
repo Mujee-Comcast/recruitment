@@ -27,5 +27,5 @@ export const routes: Routes = [
       { path: ':id', component: CandidateDetailsComponent }
     ]
   },
-  { path: '**', redirectTo: '/vacancy' }
+  { path: '**', redirectTo: '/vacancy/search' }
 ];

@@ -8,7 +8,13 @@
     </div>
   </div>
 
-  <div class="content-section" *ngIf="candidate">
+  <!-- Loading State -->
+  <div class="loading-container" *ngIf="isLoading">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p class="loading-text">Loading candidate details...</p>
+  </div>
+
+  <div class="content-section" *ngIf="!isLoading && candidate">
     <div class="candidate-info-grid">
       <!-- Basic Information Card -->
       <mat-card class="info-card profile-summary-card">
@@ -23,13 +29,11 @@
             <mat-icon class="avatar-icon">account_circle</mat-icon>
           </div>
           <div class="candidate-info">
-            <h2 class="candidate-name">{{ candidate.candidateName }}</h2>
+            <h2 class="candidate-name">{{ candidate.fullName || (candidate.firstName + ' ' + candidate.lastName) }}</h2>
             <p class="candidate-role">{{ candidate.role }}</p>
-            <div class="ats-score-section">
-              <span class="score-label">ATS Score:</span>
-              <span class="score-badge" [ngClass]="getScoreClass(candidate.atsScore)">
-                {{ candidate.atsScore }}% - {{ getScoreLabel(candidate.atsScore) }}
-              </span>
+            <div class="candidate-id">
+              <span class="id-label">Candidate ID:</span>
+              <span class="id-value">{{ candidate.candidateID }}</span>
             </div>
           </div>
         </mat-card-content>
@@ -61,7 +65,7 @@
             <mat-icon>phone</mat-icon>
             <div class="contact-details">
               <span class="contact-label">Mobile</span>
-              <a [href]="'tel:' + candidate.mobileNumber" class="contact-value">{{ candidate.mobileNumber }}</a>
+              <a [href]="'tel:' + candidate.mobile" class="contact-value">{{ candidate.mobile }}</a>
             </div>
             <button mat-icon-button (click)="callCandidate()" class="contact-action">
               <mat-icon>call</mat-icon>
@@ -81,7 +85,7 @@
         <mat-card-content>
           <div class="experience-info">
             <div class="experience-years">
-              <span class="experience-number">{{ candidate.overallExperience }}</span>
+              <span class="experience-number">{{ candidate.totalExperience }} years</span>
               <span class="experience-label">Years of Experience</span>
             </div>
           </div>
@@ -114,7 +118,7 @@
         <mat-tab label="Profile Summary">
           <div class="tab-content">
             <h3>Professional Summary</h3>
-            <p class="profile-summary-text">{{ candidate.profileSummary }}</p>
+            <p class="profile-summary-text">{{ candidate.summary }}</p>
           </div>
         </mat-tab>
 
@@ -146,17 +150,17 @@
         <!-- Experience Tab -->
         <mat-tab label="Experience">
           <div class="tab-content">
-            <div class="experience-section" *ngIf="candidate.workExperience.length > 0; else noExperience">
-              <div class="experience-item" *ngFor="let exp of candidate.workExperience; let i = index">
+            <div class="experience-section" *ngIf="candidate.experience?.length > 0; else noExperience">
+              <div class="experience-item" *ngFor="let exp of candidate.experience; let i = index">
                 <div class="experience-header">
                   <h3>{{ exp.position }}</h3>
-                  <span class="experience-period">{{ exp.startDate }} - {{ exp.endDate }}</span>
+                  <span class="experience-period">{{ exp.startDate }} - {{ exp.isCurrent ? 'Present' : exp.endDate }}</span>
                 </div>
                 <div class="experience-company">
                   <mat-icon>business</mat-icon>
                   {{ exp.company }}
                 </div>
-                <p class="experience-description">{{ exp.description }}</p>
+                <p class="experience-description">{{ exp.responsibilities }}</p>
                 <div class="experience-technologies" *ngIf="exp.technologies && exp.technologies.length > 0">
                   <h4>Technologies Used:</h4>
                   <mat-chip-set>
@@ -165,7 +169,7 @@
                     </mat-chip>
                   </mat-chip-set>
                 </div>
-                <mat-divider *ngIf="i < candidate.workExperience.length - 1" class="experience-divider"></mat-divider>
+                <mat-divider *ngIf="i < candidate.experience?.length - 1" class="experience-divider"></mat-divider>
               </div>
             </div>
             <ng-template #noExperience>
@@ -180,7 +184,7 @@
         <!-- Education Tab -->
         <mat-tab label="Education">
           <div class="tab-content">
-            <div class="education-section" *ngIf="candidate.education.length > 0; else noEducation">
+            <div class="education-section" *ngIf="candidate.education?.length > 0; else noEducation">
               <div class="education-item" *ngFor="let edu of candidate.education; let i = index">
                 <div class="education-header">
                   <h3>{{ edu.degree }}</h3>
@@ -191,10 +195,10 @@
                   {{ edu.institution }}
                 </div>
                 <div class="education-details">
-                  <p class="education-field">{{ edu.field }}</p>
+                  <p class="education-field">{{ edu.fieldOfStudy }}</p>
                   <p class="education-grade" *ngIf="edu.grade">Grade: {{ edu.grade }}</p>
                 </div>
-                <mat-divider *ngIf="i < candidate.education.length - 1" class="education-divider"></mat-divider>
+                <mat-divider *ngIf="i < candidate.education?.length - 1" class="education-divider"></mat-divider>
               </div>
             </div>
             <ng-template #noEducation>
@@ -207,57 +211,27 @@
         </mat-tab>
 
         <!-- Awards & Certifications Tab -->
-        <mat-tab label="Awards & Certifications">
+        <mat-tab label="Certifications">
           <div class="tab-content">
-            <!-- Awards Section -->
-            <div class="awards-section" *ngIf="candidate.awards.length > 0">
-              <h3>Awards & Recognition</h3>
-              <div class="awards-list">
-                <div class="award-item" *ngFor="let award of candidate.awards">
-                  <div class="award-header">
-                    <mat-icon class="award-icon">emoji_events</mat-icon>
-                    <div class="award-info">
-                      <h4>{{ award.title }}</h4>
-                      <div class="award-meta">
-                        <span class="award-organization">{{ award.organization }}</span>
-                        <span class="award-year">{{ award.year }}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <p class="award-description">{{ award.description }}</p>
-                </div>
-              </div>
-            </div>
-
-            <mat-divider *ngIf="candidate.awards.length > 0 && candidate.certifications.length > 0" class="section-divider"></mat-divider>
-
             <!-- Certifications Section -->
-            <div class="certifications-section" *ngIf="candidate.certifications.length > 0">
+            <div class="certifications-section" *ngIf="candidate.certifications?.length > 0">
               <h3>Professional Certifications</h3>
               <div class="certifications-list">
                 <div class="certification-item" *ngFor="let cert of candidate.certifications">
                   <div class="certification-header">
                     <mat-icon class="certification-icon">verified</mat-icon>
                     <div class="certification-info">
-                      <h4>{{ cert.name }}</h4>
-                      <div class="certification-meta">
-                        <span class="certification-organization">{{ cert.organization }}</span>
-                        <span class="certification-date">Issued: {{ cert.issueDate }}</span>
-                        <span class="certification-expiry" *ngIf="cert.expiryDate">Expires: {{ cert.expiryDate }}</span>
-                      </div>
+                      <h4>{{ cert }}</h4>
                     </div>
                   </div>
-                  <p class="certification-id" *ngIf="cert.credentialId">
-                    <strong>Credential ID:</strong> {{ cert.credentialId }}
-                  </p>
                 </div>
               </div>
             </div>
 
             <!-- No Awards/Certifications Message -->
-            <div class="no-data-message" *ngIf="candidate.awards.length === 0 && candidate.certifications.length === 0">
+            <div class="no-data-message" *ngIf="candidate.certifications?.length === 0">
               <mat-icon>workspace_premium_off</mat-icon>
-              <p>No awards or certifications information available.</p>
+              <p>No certifications information available.</p>
             </div>
           </div>
         </mat-tab>

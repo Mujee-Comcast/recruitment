@@ -115,6 +115,9 @@ public class ResumeImplService implements ResumeService {
                 String parsedText = textStripper.getText(document);
                 Candidate candidate = llmService.formatParsedData(parsedText);
                 return candidate;
+            } catch (Exception e) {
+                logger.error("Error parsing PDF document", e);
+                throw new IOException("Failed to parse PDF document", e);
             }
         } catch (IOException e) {
             throw new IOException("Failed to retrieve or parse file from S3", e);

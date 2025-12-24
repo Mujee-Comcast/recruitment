@@ -3,6 +3,8 @@ package com.example.job.controller;
 import java.util.List;
 import java.util.Map;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,12 +24,16 @@ import com.example.job.entity.Candidate;
 import com.example.job.service.CandidateService;
 import com.example.job.service.ResumeService;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/api/candidate")
 @Validated
+@Tag(name = "Candidate Management", description = "APIs for managing candidates")
 public class CandidateController {
+
+    private final Logger logger = LoggerFactory.getLogger(CandidateController.class);
 
     @Autowired
     private CandidateService candidateService;
@@ -36,7 +42,8 @@ public class CandidateController {
     private ResumeService resumeService;
 
     @GetMapping("/{candidateID}")
-    public ResponseEntity<Candidate> getCandidateByCandidateID(@PathVariable String candidateID) {
+    public ResponseEntity<Candidate> getCandidateByCandidateID(
+            @PathVariable String candidateID) {
         try {
             candidateID = candidateID.toUpperCase();
             Candidate candidate = candidateService.getCandidateByCandidateID(candidateID);
@@ -60,7 +67,8 @@ public class CandidateController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Candidate> createCandidate(@Valid @RequestBody Candidate candidate) {
+    public ResponseEntity<Candidate> createCandidate(
+            @Valid @RequestBody Candidate candidate) {
         try {
             Candidate createdCandidate = candidateService.createCandidate(candidate);
             return ResponseEntity.ok(createdCandidate);
@@ -70,7 +78,8 @@ public class CandidateController {
     }
 
     @PutMapping("/{candidateID}")
-    public ResponseEntity<Candidate> updateCandidate(@PathVariable String candidateID,
+    public ResponseEntity<Candidate> updateCandidate(
+            @PathVariable String candidateID,
             @Valid @RequestBody Candidate candidate) {
         try {
             candidateID = candidateID.toUpperCase();
@@ -86,7 +95,8 @@ public class CandidateController {
     }
 
     @DeleteMapping("/{candidateID}")
-    public ResponseEntity<Map<String, String>> deleteCandidate(@PathVariable String candidateID) {
+    public ResponseEntity<Map<String, String>> deleteCandidate(
+            @PathVariable String candidateID) {
         try {
             candidateID = candidateID.toUpperCase();
             if (candidateService.getCandidateByCandidateID(candidateID) == null) {
@@ -100,7 +110,8 @@ public class CandidateController {
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<Map<String, String>> uploadResume(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<Map<String, String>> uploadResume(
+            @RequestParam("file") MultipartFile file) {
         try {
             Map<String, String> uploadResult = resumeService.uploadResume(file);
 
@@ -115,12 +126,14 @@ public class CandidateController {
     }
 
     @PostMapping("/parse-resume")
-    public ResponseEntity<Candidate> parseResume(@RequestParam("fileUrl") String fileUrl,
+    public ResponseEntity<Candidate> parseResume(
+            @RequestParam("fileUrl") String fileUrl,
             @RequestParam("candidateID") String candidateID) {
         try {
             Candidate parsedContent = resumeService.parseResumeContent(fileUrl, candidateID);
             return ResponseEntity.ok(parsedContent);
         } catch (Exception e) {
+            logger.info("Error parsing resume for candidateID {}: {}", candidateID, e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(null);
         }

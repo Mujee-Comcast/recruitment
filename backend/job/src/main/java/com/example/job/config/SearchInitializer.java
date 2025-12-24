@@ -33,8 +33,7 @@ public class SearchInitializer {
                 } else {
                     logger.info("OpenSearch indices already exist, skipping initialization");
                 }
-                
-                // Perform initial data synchronization
+
                 logger.info("Starting initial data synchronization...");
                 searchSyncService.syncAllDataAsync();
                 logger.info("Initial data synchronization started (running asynchronously)");

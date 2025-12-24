@@ -901,3 +901,17 @@
     }
   }
 }
+
+/* Loading State */
+.loading-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+  text-align: center;
+  
+  .loading-text {
+    margin-top: 16px;
+    color: #666;
+    font-size: 1rem;
+  }
+}

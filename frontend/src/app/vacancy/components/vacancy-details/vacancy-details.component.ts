@@ -10,9 +10,10 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule, PageEvent } from '@angular/material/paginator';
-
-import { Vacancy, VACANCY_MOCK_DATA } from '../../../shared/data/vacancy-mock-data';
-import { CandidateProfile, CANDIDATE_PROFILES_MOCK_DATA } from '../../../shared/data/candidate-profiles-mock-data';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { VacancyResponse } from '../../../shared/interfaces/vacancy-search.interface';
+import { ApiService } from '../../../shared/services/api.service';
+import { CandidateProfile } from '../../../shared/interfaces/candidate.interface';
 
 @Component({
   selector: 'app-vacancy-details',
@@ -27,16 +28,18 @@ import { CandidateProfile, CANDIDATE_PROFILES_MOCK_DATA } from '../../../shared/
     MatTabsModule,
     MatBadgeModule,
     MatTableModule,
-    MatPaginatorModule
+    MatPaginatorModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './vacancy-details.component.html',
   styleUrls: ['./vacancy-details.component.scss']
 })
 export class VacancyDetailsComponent implements OnInit {
-  vacancy: Vacancy | null = null;
+  vacancy: VacancyResponse | null = null;
   vacancyId: string | null = null;
   matchingProfiles: CandidateProfile[] = [];
   paginatedProfiles: CandidateProfile[] = [];
+  isLoading: boolean = false;
   
   // Pagination for matching profiles
   pageSize: number = 5;
@@ -53,7 +56,8 @@ export class VacancyDetailsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private apiService: ApiService
   ) {}
 
   ngOnInit(): void {
@@ -66,12 +70,20 @@ export class VacancyDetailsComponent implements OnInit {
   }
 
   loadVacancy(id: string): void {
-    this.vacancy = VACANCY_MOCK_DATA.find(vacancy => vacancy.jobId === id) || null;
-    if (this.vacancy) {
-      this.findMatchingProfiles();
-    } else {
-      this.goBack();
-    }
+    this.isLoading = true;
+    
+    this.apiService.getVacancyById(id).subscribe({
+      next: (vacancy: VacancyResponse) => {
+        this.vacancy = vacancy;
+        this.findMatchingProfiles();
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error loading vacancy details:', error);
+        this.isLoading = false;
+        this.goBack();
+      }
+    });
   }
 
   findMatchingProfiles(): void {
@@ -81,8 +93,8 @@ export class VacancyDetailsComponent implements OnInit {
     const preferredSkills = this.vacancy.secondarySkills?.map((skill: string) => skill.toLowerCase()) || [];
     const allJobSkills = [...requiredSkills, ...preferredSkills];
 
-    this.matchingProfiles = CANDIDATE_PROFILES_MOCK_DATA
-      .map(profile => {
+    this.matchingProfiles = []
+      .map((profile:CandidateProfile) => {
         const candidateSkills = [
           ...profile.primarySkills.map(skill => skill.toLowerCase()),
           ...profile.secondarySkills.map(skill => skill.toLowerCase())
@@ -190,7 +202,7 @@ export class VacancyDetailsComponent implements OnInit {
   applyToJob(): void {
     if (this.vacancy) {
       // Simulate job application
-      console.log('Applying to job:', this.vacancy.jobTitle);
+      console.log('Applying to job:', this.vacancy.title);
       // In a real app, this would open an application form or redirect to an application page
     }
   }

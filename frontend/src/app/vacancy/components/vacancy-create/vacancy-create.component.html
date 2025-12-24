@@ -20,11 +20,11 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Job Title</mat-label>
           <input matInput 
-                 formControlName="jobTitle" 
+                 formControlName="title" 
                  placeholder="e.g., Senior Frontend Developer">
           <mat-hint>Enter a clear and descriptive job title</mat-hint>
-          <mat-error *ngIf="isFieldInvalid('jobTitle')">
-            {{getFieldErrorMessage('jobTitle')}}
+          <mat-error *ngIf="isFieldInvalid('title')">
+            {{getFieldErrorMessage('title')}}
           </mat-error>
         </mat-form-field>
       </div>
@@ -33,12 +33,12 @@
         <mat-form-field appearance="outline" class="full-width">
           <mat-label>Job Description</mat-label>
           <textarea matInput 
-                    formControlName="jobDescription"
+                    formControlName="description"
                     rows="6"
                     placeholder="Describe the role, responsibilities, and requirements..."></textarea>
-          <mat-hint>{{vacancyForm.get('jobDescription')?.value?.length || 0}}/1000 characters (minimum 50)</mat-hint>
-          <mat-error *ngIf="isFieldInvalid('jobDescription')">
-            {{getFieldErrorMessage('jobDescription')}}
+          <mat-hint>{{vacancyForm.get('description')?.value?.length || 0}}/1000 characters (minimum 50)</mat-hint>
+          <mat-error *ngIf="isFieldInvalid('description')">
+            {{getFieldErrorMessage('description')}}
           </mat-error>
         </mat-form-field>
       </div>
@@ -46,14 +46,14 @@
       <div class="form-row two-columns">
         <mat-form-field appearance="outline">
           <mat-label>Job Level</mat-label>
-          <mat-select formControlName="jobLevel">
+          <mat-select formControlName="level">
             <mat-option value="">Select job level</mat-option>
             <mat-option *ngFor="let level of jobLevels" [value]="level">
               {{level}}
             </mat-option>
           </mat-select>
-          <mat-error *ngIf="isFieldInvalid('jobLevel')">
-            {{getFieldErrorMessage('jobLevel')}}
+          <mat-error *ngIf="isFieldInvalid('level')">
+            {{getFieldErrorMessage('level')}}
           </mat-error>
         </mat-form-field>
 
@@ -61,8 +61,8 @@
           <mat-label>Experience Required</mat-label>
           <mat-select formControlName="experience">
             <mat-option value="">Select experience range</mat-option>
-            <mat-option *ngFor="let exp of experienceRanges" [value]="exp">
-              {{exp}}
+            <mat-option *ngFor="let exp of experienceOptions" [value]="exp.value">
+              {{exp.label}}
             </mat-option>
           </mat-select>
           <mat-error *ngIf="isFieldInvalid('experience')">
@@ -88,12 +88,10 @@
 
         <mat-form-field appearance="outline">
           <mat-label>Recruiter</mat-label>
-          <mat-select formControlName="recruiter">
-            <mat-option value="">Select recruiter</mat-option>
-            <mat-option *ngFor="let recruiter of recruiters" [value]="recruiter">
-              {{recruiter}}
-            </mat-option>
-          </mat-select>
+          <input matInput 
+                 formControlName="recruiter"
+                 placeholder="e.g., HR Team or John Smith">
+          <mat-hint>Enter the name of the recruiter or recruiting team</mat-hint>
           <mat-error *ngIf="isFieldInvalid('recruiter')">
             {{getFieldErrorMessage('recruiter')}}
           </mat-error>

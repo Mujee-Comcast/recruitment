@@ -10,9 +10,11 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatBadgeModule } from '@angular/material/badge';
 import { MatTableModule } from '@angular/material/table';
 import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatSnackBarModule, MatSnackBar } from '@angular/material/snack-bar';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
 
-import { CandidateProfile, CANDIDATE_PROFILES_MOCK_DATA } from '../../../shared/data/candidate-profiles-mock-data';
-import { Vacancy, VACANCY_MOCK_DATA } from '../../../shared/data/vacancy-mock-data';
+import { ApiService } from '../../../shared/services/api.service';
+import { Vacancy } from '../../../shared/interfaces/vacancy.interface';
 
 @Component({
   selector: 'app-candidate-details',
@@ -27,15 +29,18 @@ import { Vacancy, VACANCY_MOCK_DATA } from '../../../shared/data/vacancy-mock-da
     MatTabsModule,
     MatBadgeModule,
     MatTableModule,
-    MatPaginatorModule
+    MatPaginatorModule,
+    MatSnackBarModule,
+    MatProgressBarModule
   ],
   templateUrl: './candidate-details.component.html',
   styleUrls: ['./candidate-details.component.scss']
 })
 export class CandidateDetailsComponent implements OnInit {
-  candidate: CandidateProfile | null = null;
+  candidate: any | null = null; // Use any instead of CandidateProfile to match API response
   candidateId: string | null = null;
   matchingVacancies: Array<Vacancy & { matchScore: number }> = [];
+  isLoading: boolean = false;
   
   // Table configuration for matching vacancies
   displayedColumns: string[] = ['jobId', 'jobTitle', 'experience', 'matchScore', 'primarySkills'];
@@ -46,7 +51,9 @@ export class CandidateDetailsComponent implements OnInit {
 
   constructor(
     private route: ActivatedRoute,
-    private router: Router
+    private router: Router,
+    private apiService: ApiService,
+    private snackBar: MatSnackBar
   ) {}
 
   ngOnInit(): void {
@@ -59,24 +66,42 @@ export class CandidateDetailsComponent implements OnInit {
   }
 
   loadCandidate(id: string): void {
-    this.candidate = CANDIDATE_PROFILES_MOCK_DATA.find(profile => profile.id === id) || null;
-    if (!this.candidate) {
-      this.goBack();
-    } else {
-      this.loadMatchingVacancies();
-    }
+    this.isLoading = true;
+    this.apiService.getCandidateById(id).subscribe({
+      next: (candidate) => {
+        console.log('Candidate details API response:', candidate);
+        this.candidate = candidate;
+        this.isLoading = false;
+        this.loadMatchingVacancies();
+      },
+      error: (error) => {
+        console.error('Error loading candidate:', error);
+        this.isLoading = false;
+        this.snackBar.open('Error loading candidate details. Please try again.', 'Close', {
+          duration: 5000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          panelClass: ['error-snackbar']
+        });
+        this.goBack();
+      }
+    });
   }
 
   private loadMatchingVacancies(): void {
     if (!this.candidate) return;
 
+    // Ensure skills arrays exist (API response format)
+    const primarySkills = this.candidate.primarySkills || [];
+    const secondarySkills = this.candidate.secondarySkills || [];
+    
     const candidateSkills = [
-      ...this.candidate.primarySkills,
-      ...this.candidate.secondarySkills
+      ...primarySkills,
+      ...secondarySkills
     ].map(skill => skill.toLowerCase());
 
-    this.matchingVacancies = VACANCY_MOCK_DATA
-      .map(vacancy => {
+    this.matchingVacancies = []
+      .map((vacancy: Vacancy) => {
         const vacancySkills = [
           ...vacancy.primarySkills,
           ...vacancy.secondarySkills
@@ -91,8 +116,8 @@ export class CandidateDetailsComponent implements OnInit {
           ? (matchingSkills.length / vacancySkills.length) * 100 
           : 0;
 
-        // Experience match bonus
-        const candidateYears = this.extractExperienceYears(this.candidate!.overallExperience);
+        // Experience match bonus - API response has totalExperience as string
+        const candidateYears = this.extractExperienceYears(this.candidate.totalExperience || '0');
         const requiredYears = this.extractExperienceYears(vacancy.experience);
         const experienceMatchScore = candidateYears >= requiredYears ? 20 : 
           candidateYears >= (requiredYears * 0.8) ? 10 : 0;
@@ -114,30 +139,12 @@ export class CandidateDetailsComponent implements OnInit {
   }
 
   goBack(): void {
-    this.router.navigate(['/candidates']);
-  }
-
-  getScoreClass(score: number): string {
-    if (score >= 90) return 'score-excellent';
-    if (score >= 80) return 'score-good';
-    if (score >= 70) return 'score-average';
-    return 'score-poor';
-  }
-
-  getScoreLabel(score: number): string {
-    if (score >= 90) return 'Excellent';
-    if (score >= 80) return 'Good';
-    if (score >= 70) return 'Average';
-    return 'Poor';
+    this.router.navigate(['/candidate/search']);
   }
 
   downloadResume(): void {
-    if (this.candidate) {
-      // Simulate resume download
-      const link = document.createElement('a');
-      link.href = '#';
-      link.download = `${this.candidate.candidateName}_Resume.pdf`;
-      link.click();
+    if (this.candidate && this.candidate.resumeLink) {
+      window.open(this.candidate.resumeLink, '_blank');
     }
   }
 
@@ -149,7 +156,7 @@ export class CandidateDetailsComponent implements OnInit {
 
   callCandidate(): void {
     if (this.candidate) {
-      window.open(`tel:${this.candidate.mobileNumber}`);
+      window.open(`tel:${this.candidate.mobile}`);
     }
   }
 

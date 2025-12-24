@@ -8,7 +8,7 @@
     </div>
   </div>
 
-  <div class="content-section" *ngIf="vacancy">
+  <div class="content-section" *ngIf="vacancy && !isLoading">
     <div class="vacancy-info-grid">
       <!-- Job Information Card -->
       <mat-card class="info-card job-summary-card">
@@ -20,18 +20,18 @@
         </mat-card-header>
         <mat-card-content>
           <div class="job-header">
-            <h2 class="job-title">{{ vacancy.jobTitle }}</h2>
+            <h2 class="job-title">{{ vacancy.title }}</h2>
             <div class="job-meta">
-              <span class="job-level" [ngClass]="getJobLevelClass(vacancy.jobLevel)">
-                {{ getJobLevelText(vacancy.jobLevel) }}
+              <span class="job-level" [ngClass]="getJobLevelClass(vacancy.level)">
+                {{ getJobLevelText(vacancy.level) }}
               </span>
-              <span class="job-id">Job ID: {{ vacancy.jobId }}</span>
+              <span class="job-id">Job ID: {{ vacancy.vacancyID }}</span>
             </div>
           </div>
           <div class="job-details">
             <div class="detail-item">
               <mat-icon>schedule</mat-icon>
-              <span>{{ vacancy.experience }}</span>
+              <span>{{ vacancy.experience }} years</span>
             </div>
             <div class="detail-item">
               <mat-icon>groups</mat-icon>
@@ -75,11 +75,11 @@
         <mat-tab label="Job Description">
           <div class="tab-content">
             <h3>Job Description</h3>
-            <p class="job-description-text">{{ vacancy.jobDescription }}</p>
+            <p class="job-description-text">{{ vacancy.description }}</p>
             
             <div class="requirements-section">
               <h4>Experience Required</h4>
-              <p>{{ vacancy.experience }} of relevant experience in the field.</p>
+              <p>{{ vacancy.experience }} years of relevant experience in the field.</p>
             </div>
           </div>
         </mat-tab>
@@ -196,8 +196,14 @@
     </mat-card>
   </div>
 
+  <!-- Loading state -->
+  <div class="loading-section" *ngIf="isLoading">
+    <mat-spinner diameter="50"></mat-spinner>
+    <p>Loading vacancy details...</p>
+  </div>
+
   <!-- Error state -->
-  <div class="error-section" *ngIf="!vacancy">
+  <div class="error-section" *ngIf="!vacancy && !isLoading">
     <mat-card class="error-card">
       <mat-card-content>
         <div class="error-content">

@@ -16,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
+
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 
 import java.util.List;
@@ -25,6 +27,7 @@ import java.util.HashMap;
 @RestController
 @RequestMapping("/api/vacancy")
 @Validated
+@Tag(name = "Vacancy Management", description = "APIs for managing job vacancies")
 public class VacancyController {
 
     @Autowired
@@ -41,7 +44,6 @@ public class VacancyController {
         }
     }
 
-
     @GetMapping
     public ResponseEntity<List<Vacancy>> getAllVacancies() {
         try {
@@ -53,7 +55,8 @@ public class VacancyController {
     }
 
     @GetMapping("/{vacancyID}")
-    public ResponseEntity<Vacancy> getVacancyByVacancyID(@PathVariable String vacancyID) {
+    public ResponseEntity<Vacancy> getVacancyByVacancyID(
+            @PathVariable String vacancyID) {
         try {
             vacancyID = vacancyID.toUpperCase();
             Vacancy vacancy = vacancyService.getVacancyByVacancyID(vacancyID);
@@ -68,7 +71,8 @@ public class VacancyController {
     }
 
     @PostMapping("/create")
-    public ResponseEntity<Vacancy> createVacancy(@Valid @RequestBody Vacancy vacancy) {
+    public ResponseEntity<Vacancy> createVacancy(
+            @Valid @RequestBody Vacancy vacancy) {
         try {
             Vacancy createdVacancy = vacancyService.createVacancy(vacancy);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdVacancy);
@@ -78,7 +82,9 @@ public class VacancyController {
     }
 
     @PutMapping("/{vacancyID}")
-    public ResponseEntity<Vacancy> updateVacancy(@PathVariable String vacancyID, @Valid @RequestBody Vacancy vacancy) {
+    public ResponseEntity<Vacancy> updateVacancy(
+            @PathVariable String vacancyID,
+            @Valid @RequestBody Vacancy vacancy) {
         try {
             vacancyID = vacancyID.toUpperCase();
             vacancy.setId(vacancyID);
@@ -93,18 +99,19 @@ public class VacancyController {
     }
 
     @DeleteMapping("/{vacancyID}")
-    public ResponseEntity<Map<String, String>> deleteVacancy(@PathVariable String vacancyID) {
+    public ResponseEntity<Map<String, String>> deleteVacancy(
+            @PathVariable String vacancyID) {
         try {
             vacancyID = vacancyID.toUpperCase();
             if (vacancyService.getVacancyByVacancyID(vacancyID) == null) {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Vacancy not found"));
+                        .body(Map.of("error", "Vacancy not found"));
             }
             vacancyService.deleteVacancy(vacancyID);
             return ResponseEntity.ok(Map.of("message", "Vacancy deleted successfully"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                .body(Map.of("error", "Failed to delete vacancy: " + e.getMessage()));
+                    .body(Map.of("error", "Failed to delete vacancy: " + e.getMessage()));
         }
     }
 

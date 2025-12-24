@@ -6,21 +6,23 @@
     </div>
     <div class="nav-links">
       <button
+        class="menu-btn"
         matButton
         [matMenuTriggerFor]="vacanciesMenu"
         #vacancyMenuTrigger="matMenuTrigger"
         (mouseover)="vacancyMenuTrigger.openMenu()"
       >
-        <mat-icon>dashboard</mat-icon>
+        <!-- <mat-icon>dashboard</mat-icon> -->
         Vacancy
       </button>
       <button
+        class="menu-btn"
         matButton
         [matMenuTriggerFor]="candidatesMenu"
         #candidateMenuTrigger="matMenuTrigger"
         (mouseover)="candidateMenuTrigger.openMenu()"
       >
-        <mat-icon>person</mat-icon>
+        <!-- <mat-icon>person</mat-icon> -->
         Candidate
       </button>
 

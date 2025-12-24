@@ -20,14 +20,26 @@
               <input
                 matInput
                 [(ngModel)]="searchTerm"
-                (input)="onSearchChange()"
                 placeholder="Job title, skills, recruiter, or keywords..."
+                (keyup.enter)="searchVacancies()"
               />
               <mat-icon matPrefix class="search-prefix-icon">search</mat-icon>
               <button mat-icon-button matSuffix *ngIf="searchTerm" (click)="clearSearch()" class="clear-button">
                 <mat-icon>close</mat-icon>
               </button>
             </mat-form-field>
+
+            <!-- Quick Search Button -->
+            <button 
+              mat-raised-button 
+              color="primary"
+              (click)="searchVacancies()"
+              class="quick-search-btn"
+              [disabled]="isLoading">
+              <mat-icon *ngIf="isLoading">hourglass_empty</mat-icon>
+              <mat-icon *ngIf="!isLoading">search</mat-icon>
+              {{ isLoading ? 'Searching...' : 'Search' }}
+            </button>
 
             <!-- Advanced Filters Toggle -->
             <div class="filter-toggle-section">
@@ -121,15 +133,18 @@
                     mat-raised-button 
                     color="primary" 
                     (click)="applyFilters()" 
-                    class="apply-btn">
-                    <mat-icon>check</mat-icon>
-                    Apply Filters
+                    class="apply-btn"
+                    [disabled]="isLoading">
+                    <mat-icon *ngIf="isLoading">hourglass_empty</mat-icon>
+                    <mat-icon *ngIf="!isLoading">search</mat-icon>
+                    {{ isLoading ? 'Searching...' : 'Search Vacancies' }}
                   </button>
                   
                   <button 
                     mat-stroked-button 
                     (click)="resetFilters()" 
-                    class="reset-btn">
+                    class="reset-btn"
+                    [disabled]="isLoading">
                     <mat-icon>clear</mat-icon>
                     Reset
                   </button>
@@ -138,12 +153,24 @@
             </mat-expansion-panel>
           </div>
           
-          <div class="search-stats" *ngIf="searchTerm || hasActiveFilters()">
+          <div class="search-stats" *ngIf="isSearchExecuted">
             <mat-icon class="stats-icon">info</mat-icon>
             <span class="stats-text">
-              Found {{ totalItems }} {{ totalItems === 1 ? 'vacancy' : 'vacancies' }}
-              <span *ngIf="searchTerm"> for "<strong>{{ searchTerm }}</strong>"</span>
-              <span *ngIf="getActiveFilterCount() > 0"> with {{ getActiveFilterCount() }} filter(s) applied</span>
+              <span *ngIf="searchTerm || hasActiveFilters(); else showingAll">
+                Found {{ totalItems }} {{ totalItems === 1 ? 'vacancy' : 'vacancies' }}
+                <span *ngIf="searchTerm"> for "<strong>{{ searchTerm }}</strong>"</span>
+                <span *ngIf="getActiveFilterCount() > 0"> with {{ getActiveFilterCount() }} filter(s) applied</span>
+              </span>
+              <ng-template #showingAll>
+                Showing {{ totalItems }} {{ totalItems === 1 ? 'vacancy' : 'vacancies' }} (all available positions)
+              </ng-template>
+            </span>
+          </div>
+          
+          <div class="search-stats" *ngIf="!isSearchExecuted && !isLoading">
+            <mat-icon class="stats-icon">info</mat-icon>
+            <span class="stats-text">
+              Loading all available vacancies...
             </span>
           </div>
         </div>
@@ -158,8 +185,11 @@
         <div class="table-header">
           <div class="table-title-section">
             <mat-card-title>Available Vacancies</mat-card-title>
-            <mat-card-subtitle>
+            <mat-card-subtitle *ngIf="isSearchExecuted && !isLoading">
               Showing {{ paginatedVacancies.length }} of {{ totalItems }} vacancies
+            </mat-card-subtitle>
+            <mat-card-subtitle *ngIf="isLoading">
+              Loading vacancies...
             </mat-card-subtitle>
           </div>
           <div class="table-actions">
@@ -176,39 +206,51 @@
       </mat-card-header>
 
       <mat-card-content>
-        <div class="table-container">
+        <!-- Loading Indicator -->
+        <div *ngIf="isLoading" class="loading-container">
+          <mat-spinner diameter="50"></mat-spinner>
+          <p>Loading vacancies...</p>
+        </div>
+
+        <!-- No Results -->
+        <div *ngIf="!isLoading && isSearchExecuted && totalItems === 0" class="no-results">
+          <h3>No Vacancies Found</h3>
+        </div>
+
+        <!-- Results Table -->
+        <div class="table-container" *ngIf="!isLoading && isSearchExecuted && totalItems > 0">
           <table mat-table [dataSource]="paginatedVacancies" matSort (matSortChange)="sortData($event)" class="vacancies-table">
             
             <!-- Job ID Column -->
-            <ng-container matColumnDef="jobId">
+            <ng-container matColumnDef="vacancyID">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Job ID</th>
               <td mat-cell *matCellDef="let vacancy">
-                <span class="job-id-link" (click)="viewVacancyDetails(vacancy.jobId)">
-                  {{ vacancy.jobId }}
+                <span class="job-id-link" (click)="viewVacancyDetails(vacancy.vacancyID)">
+                  {{ vacancy.vacancyID }}
                 </span>
               </td>
             </ng-container>
 
             <!-- Job Title Column -->
-            <ng-container matColumnDef="jobTitle">
+            <ng-container matColumnDef="title">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Job Title</th>
-              <td mat-cell *matCellDef="let vacancy" class="job-title">{{ vacancy.jobTitle }}</td>
+              <td mat-cell *matCellDef="let vacancy" class="job-title">{{ vacancy.title }}</td>
             </ng-container>
 
             <!-- Job Description Column -->
-            <ng-container matColumnDef="jobDescription">
+            <ng-container matColumnDef="description">
               <th mat-header-cell *matHeaderCellDef>Job Description</th>
               <td mat-cell *matCellDef="let vacancy" class="job-description">
-                {{ vacancy.jobDescription }}
+                {{ vacancy.description }}
               </td>
             </ng-container>
 
             <!-- Job Level Column -->
-            <ng-container matColumnDef="jobLevel">
+            <ng-container matColumnDef="level">
               <th mat-header-cell *matHeaderCellDef mat-sort-header>Job Level</th>
               <td mat-cell *matCellDef="let vacancy">
-                <span class="job-level" [ngClass]="getJobLevelClass(vacancy.jobLevel)">
-                  {{ vacancy.jobLevel }}
+                <span class="job-level" [ngClass]="getJobLevelClass(vacancy.level)">
+                  {{ vacancy.level }}
                 </span>
               </td>
             </ng-container>
@@ -270,6 +312,7 @@
 
         <!-- Pagination -->
         <mat-paginator
+          *ngIf="!isLoading && isSearchExecuted && totalItems > 0"
           [length]="totalItems"
           [pageSize]="pageSize"
           [pageSizeOptions]="[5, 10, 20, 50]"

@@ -62,17 +62,31 @@
       </h2>
       
       <div class="field-group">
-        <mat-form-field appearance="outline">
-          <mat-label>Full Name *</mat-label>
-          <input matInput formControlName="candidateName" placeholder="Enter candidate's full name">
-          <mat-icon matSuffix>person</mat-icon>
-          <mat-error *ngIf="candidateForm.get('candidateName')?.hasError('required')">
-            Full name is required
-          </mat-error>
-          <mat-error *ngIf="candidateForm.get('candidateName')?.hasError('minlength')">
-            Name must be at least 2 characters
-          </mat-error>
-        </mat-form-field>
+        <div class="field-row">
+          <mat-form-field appearance="outline">
+            <mat-label>First Name *</mat-label>
+            <input matInput formControlName="firstName" placeholder="Enter first name">
+            <mat-icon matSuffix>person</mat-icon>
+            <mat-error *ngIf="candidateForm.get('firstName')?.hasError('required')">
+              First name is required
+            </mat-error>
+            <mat-error *ngIf="candidateForm.get('firstName')?.hasError('minlength')">
+              First name must be at least 2 characters
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline">
+            <mat-label>Last Name *</mat-label>
+            <input matInput formControlName="lastName" placeholder="Enter last name">
+            <mat-icon matSuffix>person</mat-icon>
+            <mat-error *ngIf="candidateForm.get('lastName')?.hasError('required')">
+              Last name is required
+            </mat-error>
+            <mat-error *ngIf="candidateForm.get('lastName')?.hasError('minlength')">
+              Last name must be at least 2 characters
+            </mat-error>
+          </mat-form-field>
+        </div>
 
         <div class="field-row">
           <mat-form-field appearance="outline">
@@ -210,6 +224,44 @@
                      class="secondary-skill-chip"
                      (removed)="removeSecondarySkill(i)">
               {{skill}}
+              <mat-icon matChipRemove>cancel</mat-icon>
+            </mat-chip>
+          </mat-chip-set>
+        </div>
+      </div>
+    </div>
+
+    <!-- Certifications Section -->
+    <div class="form-section">
+      <h2>
+        <mat-icon>verified</mat-icon>
+        Certifications
+      </h2>
+      
+      <div class="field-group">
+        <div class="skills-input-row">
+          <mat-form-field appearance="outline" class="skill-input-field">
+            <mat-label>Certifications</mat-label>
+            <input matInput formControlName="certificationsInput" 
+                   placeholder="Type a certification (e.g., AWS Certified Developer)"
+                   (keydown.enter)="addCertification($event)">
+            <mat-hint>Press Enter or click + to add certifications</mat-hint>
+          </mat-form-field>
+          <button type="button" 
+                  mat-icon-button 
+                  color="primary" 
+                  class="add-skill-button"
+                  (click)="addCertificationFromButton()">
+            <mat-icon>add_circle</mat-icon>
+          </button>
+        </div>
+        
+        <div class="skills-display" *ngIf="certifications.length > 0">
+          <mat-chip-set>
+            <mat-chip *ngFor="let cert of certifications; let i = index" 
+                     class="certification-chip"
+                     (removed)="removeCertification(i)">
+              {{cert}}
               <mat-icon matChipRemove>cancel</mat-icon>
             </mat-chip>
           </mat-chip-set>
@@ -363,17 +415,15 @@
 
     <!-- Form Actions -->
     <div class="form-actions">
-      <div class="action-buttons">
-        <button type="button" mat-stroked-button (click)="onCancel()">
+       <button type="button" mat-stroked-button (click)="onCancel()"  class="cancel-btn">
           <mat-icon>cancel</mat-icon>
           Cancel
         </button>
         <button type="submit" mat-raised-button color="primary" 
-                [disabled]="candidateForm.invalid || isSubmitting">
+                 class="submit-btn">
           <mat-icon>save</mat-icon>
           {{isSubmitting ? 'Creating...' : 'Create Candidate'}}
         </button>
-      </div>
     </div>
   </form>
 </div>

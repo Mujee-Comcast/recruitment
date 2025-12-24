@@ -34,6 +34,7 @@ dependencies {
 	implementation 'org.apache.pdfbox:pdfbox:2.0.29'
 	implementation 'com.azure:azure-ai-openai:1.0.0-beta.8'
 	implementation 'com.azure:azure-core:1.45.0'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.7.0'
 
 	compileOnly 'org.projectlombok:lombok'
 	annotationProcessor 'org.projectlombok:lombok'

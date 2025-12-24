@@ -9,8 +9,8 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
-import { WorkExperience, Education } from '../../../shared/data/candidate-profiles-mock-data';
-import { HttpClient } from '@angular/common/http';
+import { ApiService } from '../../../shared/services/api.service';
+import { WorkExperience, Education } from '../../../shared/interfaces/candidate.interface';
 
 @Component({
   selector: 'app-candidate-create',
@@ -33,6 +33,7 @@ export class CandidateCreateComponent implements OnInit {
   candidateForm!: FormGroup;
   primarySkills: string[] = [];
   secondarySkills: string[] = [];
+  certifications: string[] = [];
   selectedFile: File | null = null;
   currentCandidate: any = null;
   isDragOver = false;
@@ -41,7 +42,7 @@ export class CandidateCreateComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private router: Router,
-    private http: HttpClient
+    private apiService: ApiService
   ) {}
 
   ngOnInit() {
@@ -50,7 +51,8 @@ export class CandidateCreateComponent implements OnInit {
 
   private initializeForm() {
     this.candidateForm = this.fb.group({
-      candidateName: ['', [Validators.required, Validators.minLength(2)]],
+      firstName: ['', [Validators.required, Validators.minLength(2)]],
+      lastName: ['', [Validators.required, Validators.minLength(1)]],
       email: ['', [Validators.required, Validators.email]],
       mobileNumber: ['', [Validators.required, Validators.pattern(/^[+]?[1-9]\d{1,14}$/)]],
       role: ['', Validators.required],
@@ -58,6 +60,7 @@ export class CandidateCreateComponent implements OnInit {
       profileSummary: ['', [Validators.required, Validators.minLength(50)]],
       primarySkillsInput: [''],
       secondarySkillsInput: [''],
+      certificationsInput: [''],
       workExperience: this.fb.array([this.createWorkExperienceGroup()]),
       education: this.fb.array([this.createEducationGroup()])
     });
@@ -141,6 +144,31 @@ export class CandidateCreateComponent implements OnInit {
     this.secondarySkills.splice(index, 1);
   }
 
+  // Certifications Management
+  addCertification(event?: Event) {
+    if (event) {
+      event.preventDefault();
+    }
+    
+    const certInput = this.candidateForm.get('certificationsInput');
+    if (certInput) {
+      const certification = certInput.value?.trim();
+      
+      if (certification && !this.certifications.includes(certification)) {
+        this.certifications.push(certification);
+        certInput.setValue('');
+      }
+    }
+  }
+
+  addCertificationFromButton() {
+    this.addCertification();
+  }
+
+  removeCertification(index: number) {
+    this.certifications.splice(index, 1);
+  }
+
   // Mobile number validation
   onMobileKeyPress(event: KeyboardEvent) {
     const char = event.key;
@@ -212,20 +240,16 @@ export class CandidateCreateComponent implements OnInit {
     }
 
     this.selectedFile = file;
-    const formData = new FormData();
-    formData.append('file', file);
 
-    const token = "test";
-
-    this.http.post('http://localhost:8080/api/candidate/upload', formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
+    this.apiService.uploadCandidateResume(file).subscribe({
+      next: (response: any) => {
+        this.currentCandidate = { candidateID: response.candidateID, resumeFileUrl: response.fileUrl };
+        console.log('File uploaded successfully', response);
+      },
+      error: (error) => {
+        console.error('File upload failed', error);
+        alert('File upload failed. Please try again.');
       }
-    }).subscribe((response:any) => {
-      this.currentCandidate = { candidateID: response.candidateID, resumeFileUrl: response.fileUrl };
-      console.log('File uploaded successfully', response);
-    }, error => {
-      console.error('File upload failed', error);
     });
   }
 
@@ -261,33 +285,64 @@ export class CandidateCreateComponent implements OnInit {
 
   // Form Submission
   onSubmit() {
+    console.log('Form Submitted', this.candidateForm);
+    console.log('form valid status:', this.candidateForm.valid);
     if (this.candidateForm.valid && this.primarySkills.length > 0) {
       this.isSubmitting = true;
       
       const formData = this.candidateForm.value;
+      
+      // Map work experience to API format
+      const experience = formData.workExperience
+        .filter((exp: WorkExperience) => exp.company)
+        .map((exp: WorkExperience) => ({
+          company: exp.company,
+          position: exp.position,
+          startDate: exp.startDate,
+          isCurrent: !exp.endDate || exp.endDate === '',
+          responsibilities: exp.description
+        }));
+      
+      // Map education to API format
+      const education = formData.education
+        .filter((edu: Education) => edu.institution)
+        .map((edu: Education) => ({
+          degree: edu.degree,
+          fieldOfStudy: edu.field,
+          institution: edu.institution,
+          graduationYear: edu.graduationYear
+        }));
+      
       const candidateProfile = {
-        candidateName: formData.candidateName,
+        candidateID: this.currentCandidate?.candidateID || '',
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
-        mobileNumber: formData.mobileNumber,
+        mobile: formData.mobileNumber,
         role: formData.role,
-        overallExperience: formData.overallExperience,
-        profileSummary: formData.profileSummary,
+        totalExperience: formData.overallExperience,
+        experience: experience,
+        summary: formData.profileSummary,
         primarySkills: this.primarySkills,
         secondarySkills: this.secondarySkills,
-        workExperience: formData.workExperience.filter((exp: WorkExperience) => exp.company),
-        education: formData.education.filter((edu: Education) => edu.institution),
-        awards: [],
-        certifications: [],
-        resumeFileName: this.selectedFile?.name,
+        education: education,
+        certifications: this.certifications,
+        resumeLink: this.currentCandidate?.resumeFileUrl || ''
       };
 
-      // Simulate API call
-      setTimeout(() => {
-        console.log('Candidate Profile Created:', candidateProfile);
-        this.isSubmitting = false;
-        alert('Candidate created successfully!');
-        this.router.navigate(['/candidate']);
-      }, 2000);
+      this.apiService.createCandidateProfile(candidateProfile).subscribe({
+        next: (response: any) => {
+          console.log('Candidate Profile Created:', response);
+          this.isSubmitting = false;
+          alert('Candidate created successfully!');
+          this.router.navigateByUrl(`/candidate/${response.candidateID}`);
+        },
+        error: (error) => {
+          console.error('Candidate creation failed:', error);
+          this.isSubmitting = false;
+          alert('Failed to create candidate. Please try again.');
+        }
+      });
     } else {
       this.markFormGroupTouched();
       if (this.primarySkills.length === 0) {
@@ -325,20 +380,111 @@ export class CandidateCreateComponent implements OnInit {
   }
 
   parseResume() {
+    if (!this.currentCandidate?.resumeFileUrl || !this.currentCandidate?.candidateID) {
+      alert('Please upload a resume first.');
+      return;
+    }
 
-    const formData = new FormData();
-    formData.append('fileUrl', this.currentCandidate?.resumeFileUrl || '');
-    formData.append('candidateID', this.currentCandidate?.candidateID || '');
-
-    const token = "test";
-
-    this.http.post<any>('http://localhost:8080/api/candidate/parse-resume', formData, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
+    this.apiService.parseResume(this.currentCandidate.resumeFileUrl, this.currentCandidate.candidateID).subscribe({
+      next: (response: any) => {
+        console.log('Resume parsed successfully', response);
+        this.bindResponseToForm(response);
+        alert('Resume parsed successfully! Form has been updated with extracted information.');
+      },
+      error: (error) => {
+        console.error('Resume parsing failed:', error);
+        alert('Failed to parse resume. Please try again.');
       }
-    }).subscribe(response => {
-      console.log('Resume parsed successfully', response);
-      
     });
+  }
+
+  private bindResponseToForm(parsedData: any) {
+    if (parsedData) {
+      // Bind basic information
+      if (parsedData.firstName) {
+        this.candidateForm.patchValue({ firstName: parsedData.firstName });
+      }
+      
+      if (parsedData.lastName) {
+        this.candidateForm.patchValue({ lastName: parsedData.lastName });
+      }
+      
+      if (parsedData.email) {
+        this.candidateForm.patchValue({ email: parsedData.email });
+      }
+      
+      if (parsedData.mobile) {
+        this.candidateForm.patchValue({ mobileNumber: parsedData.mobile });
+      }
+      
+      if (parsedData.role) {
+        this.candidateForm.patchValue({ role: parsedData.role });
+      }
+      
+      if (parsedData.totalExperience) {
+        this.candidateForm.patchValue({ overallExperience: parsedData.totalExperience });
+      }
+      
+      if (parsedData.summary) {
+        this.candidateForm.patchValue({ profileSummary: parsedData.summary });
+      }
+
+      // Bind skills
+      if (parsedData.primarySkills && Array.isArray(parsedData.primarySkills)) {
+        this.primarySkills = [...parsedData.primarySkills];
+      }
+      
+      if (parsedData.secondarySkills && Array.isArray(parsedData.secondarySkills)) {
+        this.secondarySkills = [...parsedData.secondarySkills];
+      }
+
+      // Bind certifications
+      if (parsedData.certifications && Array.isArray(parsedData.certifications)) {
+        this.certifications = [...parsedData.certifications];
+      }
+
+      // Bind work experience
+      if (parsedData.experience && Array.isArray(parsedData.experience)) {
+        const workExperienceArray = this.candidateForm.get('workExperience') as FormArray;
+        workExperienceArray.clear();
+        
+        parsedData.experience.forEach((exp: any) => {
+          const expGroup = this.fb.group({
+            company: [exp.company || ''],
+            position: [exp.position || ''],
+            startDate: [exp.startDate || ''],
+            endDate: [exp.isCurrent ? '' : (exp.endDate || '')],
+            description: [exp.responsibilities || ''],
+            technologies: [[]]
+          });
+          workExperienceArray.push(expGroup);
+        });
+        
+        if (workExperienceArray.length === 0) {
+          workExperienceArray.push(this.createWorkExperienceGroup());
+        }
+      }
+
+      // Bind education
+      if (parsedData.education && Array.isArray(parsedData.education)) {
+        const educationArray = this.candidateForm.get('education') as FormArray;
+        educationArray.clear();
+        
+        parsedData.education.forEach((edu: any) => {
+          const eduGroup = this.fb.group({
+            institution: [edu.institution || ''],
+            degree: [edu.degree || ''],
+            field: [edu.fieldOfStudy || ''],
+            graduationYear: [edu.graduationYear || ''],
+            grade: ['']
+          });
+          educationArray.push(eduGroup);
+        });
+        
+        if (educationArray.length === 0) {
+          educationArray.push(this.createEducationGroup());
+        }
+      }
+    }
   }
 }

@@ -13,8 +13,11 @@ import { MatSelectModule } from '@angular/material/select';
 import { MatSortModule, Sort } from '@angular/material/sort';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { Router } from '@angular/router';
-import { Vacancy, VACANCY_MOCK_DATA } from '../../../shared/data/vacancy-mock-data';
+import { VacancySearchRequest, VacancySearchResponse, VacancyResponse } from '../../../shared/interfaces/vacancy-search.interface';
+import { ApiService } from '../../../shared/services/api.service';
+import { Vacancy } from '../../../shared/interfaces/vacancy.interface';
 
 @Component({
   selector: 'app-vacancy-search',
@@ -33,17 +36,18 @@ import { Vacancy, VACANCY_MOCK_DATA } from '../../../shared/data/vacancy-mock-da
     MatButtonModule,
     MatSelectModule,
     MatExpansionModule,
-    MatSortModule
+    MatSortModule,
+    MatProgressSpinnerModule
   ],
   templateUrl: './vacancy-search.component.html',
   styleUrl: './vacancy-search.component.scss'
 })
 export class VacancySearchComponent implements OnInit {
   displayedColumns: string[] = [
-    'jobId',
-    'jobTitle',
-    'jobDescription',
-    'jobLevel',
+    'vacancyID',
+    'title', 
+    'description',
+    'level',
     'experience',
     'openPositions',
     'recruiter',
@@ -51,10 +55,12 @@ export class VacancySearchComponent implements OnInit {
     'secondarySkills'
   ];
 
-  allVacancies: Vacancy[] = VACANCY_MOCK_DATA;
-  filteredVacancies: Vacancy[] = [];
-  paginatedVacancies: Vacancy[] = [];
+  allVacancies: VacancyResponse[] = [];
+  filteredVacancies: VacancyResponse[] = [];
+  paginatedVacancies: VacancyResponse[] = [];
   searchTerm: string = '';
+  isLoading: boolean = false;
+  isSearchExecuted: boolean = false;
   
   // Advanced filter form
   filterForm: FormGroup;
@@ -70,7 +76,11 @@ export class VacancySearchComponent implements OnInit {
   pageIndex: number = 0;
   totalItems: number = 0;
 
-  constructor(private router: Router, private fb: FormBuilder) {
+  // Sorting properties
+  currentSortField: string = 'vacancyID';
+  currentSortOrder: 'ASC' | 'DESC' = 'ASC';
+
+  constructor(private router: Router, private fb: FormBuilder, private apiService: ApiService) {
     this.filterForm = this.fb.group({
       jobId: [''],
       jobTitle: [''],
@@ -82,80 +92,73 @@ export class VacancySearchComponent implements OnInit {
 
   ngOnInit(): void {
     this.initializeFilterOptions();
-    this.filterVacancies();
+    // Load all vacancies on page load with default search criteria
+    this.searchVacancies();
   }
 
   private initializeFilterOptions(): void {
-    // Extract unique job levels
-    this.jobLevels = [...new Set(this.allVacancies.map(v => v.jobLevel))].sort();
+    // Extract unique job levels from mock data for filter options
+    this.jobLevels = [].sort();
     
-    // Extract unique recruiters
-    this.recruiters = [...new Set(this.allVacancies.map(v => v.recruiter))].sort();
+    // Extract unique recruiters from mock data for filter options
+    this.recruiters = [].sort();
     
-    // Extract all skills (primary and secondary)
+    // Extract all skills (primary and secondary) from mock data for filter options
     const allSkillsSet = new Set<string>();
-    this.allVacancies.forEach(vacancy => {
-      vacancy.primarySkills.forEach(skill => allSkillsSet.add(skill));
-      vacancy.secondarySkills.forEach(skill => allSkillsSet.add(skill));
-    });
     this.allSkills = Array.from(allSkillsSet).sort();
   }
 
-  onSearchChange(): void {
+  // Search will only trigger when apply button is clicked
+
+  searchVacancies(): void {
+    this.isLoading = true;
     this.pageIndex = 0;
-    this.filterVacancies();
+
+    const searchRequest: VacancySearchRequest = this.buildSearchRequest();
+    
+    this.apiService.searchVacancies(searchRequest).subscribe({
+      next: (response: VacancySearchResponse) => {
+        this.allVacancies = response.results;
+        this.filteredVacancies = response.results;
+        this.totalItems = response.results.length;
+        this.updatePaginatedData();
+        this.isSearchExecuted = true;
+        this.isLoading = false;
+      },
+      error: (error) => {
+        console.error('Error searching vacancies:', error);
+        this.isLoading = false;
+        // Handle error - could show a snackbar or error message
+      }
+    });
+  }
+
+  private buildSearchRequest(): VacancySearchRequest {
+    const formValues = this.filterForm.value;
+    
+    return {
+      searchKey: this.searchTerm || '',
+      filter: {
+        vacancyID: formValues.jobId && formValues.jobId.trim() ? formValues.jobId : null,
+        title: formValues.jobTitle && formValues.jobTitle.trim() ? formValues.jobTitle : null,
+        description: null, // Not available in the form
+        level: formValues.jobLevel || null,
+        experience: null, // Not available in the form
+        openPositions: null, // Not available in the form
+        recruiter: formValues.recruiter || null,
+        primarySkills: formValues.skills && formValues.skills.length > 0 ? formValues.skills : null,
+        secondarySkills: null // Could be extended to separate primary/secondary skills
+      },
+      sortField: this.currentSortField,
+      sortOrder: this.currentSortOrder,
+      pageNumber: this.pageIndex,
+      itemsPerPage: this.pageSize
+    };
   }
 
   private filterVacancies(): void {
-    let filtered = [...this.allVacancies];
-
-    // Apply text search
-    if (this.searchTerm.trim()) {
-      const searchLower = this.searchTerm.toLowerCase();
-      filtered = filtered.filter(vacancy =>
-        vacancy.jobTitle.toLowerCase().includes(searchLower) ||
-        vacancy.jobDescription.toLowerCase().includes(searchLower) ||
-        vacancy.recruiter.toLowerCase().includes(searchLower) ||
-        vacancy.primarySkills.some(skill => skill.toLowerCase().includes(searchLower)) ||
-        vacancy.secondarySkills.some(skill => skill.toLowerCase().includes(searchLower)) ||
-        vacancy.jobId.toLowerCase().includes(searchLower)
-      );
-    }
-
-    // Apply advanced filters
-    const formValues = this.filterForm.value;
-    
-    if (formValues.jobId && formValues.jobId.trim()) {
-      filtered = filtered.filter(vacancy => 
-        vacancy.jobId.toLowerCase().includes(formValues.jobId.toLowerCase())
-      );
-    }
-
-    if (formValues.jobTitle && formValues.jobTitle.trim()) {
-      filtered = filtered.filter(vacancy => 
-        vacancy.jobTitle.toLowerCase().includes(formValues.jobTitle.toLowerCase())
-      );
-    }
-
-    if (formValues.jobLevel) {
-      filtered = filtered.filter(vacancy => vacancy.jobLevel === formValues.jobLevel);
-    }
-
-    if (formValues.recruiter) {
-      filtered = filtered.filter(vacancy => vacancy.recruiter === formValues.recruiter);
-    }
-
-    if (formValues.skills && formValues.skills.length > 0) {
-      filtered = filtered.filter(vacancy => {
-        const allVacancySkills = [...vacancy.primarySkills, ...vacancy.secondarySkills];
-        return formValues.skills.some((selectedSkill: string) => 
-          allVacancySkills.includes(selectedSkill)
-        );
-      });
-    }
-
-    this.filteredVacancies = filtered;
-    this.totalItems = this.filteredVacancies.length;
+    // This method is now handled by the API search
+    // Keep for local filtering if needed, but main search is through API
     this.updatePaginatedData();
   }
 
@@ -164,20 +167,24 @@ export class VacancySearchComponent implements OnInit {
   }
 
   applyFilters(): void {
-    this.pageIndex = 0;
-    this.filterVacancies();
+    this.searchVacancies();
   }
 
   clearSearch(): void {
     this.searchTerm = '';
-    this.onSearchChange();
+    this.searchVacancies();
+    // Don't auto-search, user needs to click apply
   }
 
   resetFilters(): void {
     this.searchTerm = '';
     this.filterForm.reset();
     this.pageIndex = 0;
-    this.filterVacancies();
+    this.isSearchExecuted = false;
+    this.allVacancies = [];
+    this.filteredVacancies = [];
+    this.paginatedVacancies = [];
+    this.totalItems = 0;
   }
 
   hasActiveFilters(): boolean {
@@ -207,10 +214,21 @@ export class VacancySearchComponent implements OnInit {
   onPageChange(event: PageEvent): void {
     this.pageSize = event.pageSize;
     this.pageIndex = event.pageIndex;
-    this.updatePaginatedData();
+    
+    if (this.isSearchExecuted) {
+      // Re-search with new pagination
+      this.searchVacancies();
+    } else {
+      this.updatePaginatedData();
+    }
   }
 
   private updatePaginatedData(): void {
+    if (!this.filteredVacancies || !Array.isArray(this.filteredVacancies)) {
+      this.paginatedVacancies = [];
+      return;
+    }
+    
     const startIndex = this.pageIndex * this.pageSize;
     const endIndex = startIndex + this.pageSize;
     this.paginatedVacancies = this.filteredVacancies.slice(startIndex, endIndex);
@@ -224,8 +242,8 @@ export class VacancySearchComponent implements OnInit {
     return 'level-' + jobLevel.toLowerCase().replace(/[^a-z]/g, '');
   }
 
-  viewVacancyDetails(jobId: string): void {
-    this.router.navigate(['/vacancy', jobId]);
+  viewVacancyDetails(vacancyID: string): void {
+    this.router.navigate(['/vacancy', vacancyID]);
   }
 
   navigateToCreate(): void {
@@ -233,34 +251,30 @@ export class VacancySearchComponent implements OnInit {
   }
 
   sortData(sort: Sort): void {
-    const data = this.filteredVacancies.slice();
     if (!sort.active || sort.direction === '') {
-      this.filteredVacancies = data;
-      this.updatePaginatedData();
-      return;
+      this.currentSortField = 'vacancyID';
+      this.currentSortOrder = 'ASC';
+    } else {
+      // Map frontend column names to API field names
+      const fieldMapping: { [key: string]: string } = {
+        'vacancyID': 'vacancyID',
+        'title': 'title',
+        'level': 'level',
+        'experience': 'experience',
+        'openPositions': 'openPositions',
+        'recruiter': 'recruiter'
+      };
+
+      this.currentSortField = fieldMapping[sort.active] || sort.active;
+      this.currentSortOrder = sort.direction.toUpperCase() as 'ASC' | 'DESC';
     }
 
-    this.filteredVacancies = data.sort((a, b) => {
-      const isAsc = sort.direction === 'asc';
-      switch (sort.active) {
-        case 'jobId':
-          return compare(a.jobId, b.jobId, isAsc);
-        case 'jobTitle':
-          return compare(a.jobTitle, b.jobTitle, isAsc);
-        case 'jobLevel':
-          return compare(a.jobLevel, b.jobLevel, isAsc);
-        case 'experience':
-          return compare(a.experience, b.experience, isAsc);
-        case 'openPositions':
-          return compare(a.openPositions, b.openPositions, isAsc);
-        case 'recruiter':
-          return compare(a.recruiter, b.recruiter, isAsc);
-        default:
-          return 0;
-      }
-    });
     this.pageIndex = 0; // Reset to first page after sorting
-    this.updatePaginatedData();
+    
+    if (this.isSearchExecuted) {
+      // Re-search with new sorting
+      this.searchVacancies();
+    }
   }
 }
 

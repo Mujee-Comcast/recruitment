@@ -1,74 +1,211 @@
 <div class="profiles-container">
-  <!-- Upload Section -->
-  <div class="upload-section">
-    <div class="upload-content">
-      <h1 class="upload-title">Candidate Profiles</h1>
-      <p class="upload-subtitle">Upload resumes to automatically extract candidate information</p>
-      
-      <!-- Resume Upload Card -->
-      <mat-card class="upload-card">
-        <mat-card-header>
-          <mat-card-title>
-            <mat-icon>cloud_upload</mat-icon>
-            Upload Resume
-          </mat-card-title>
-          <mat-card-subtitle>
-            Upload a PDF resume to automatically extract candidate profile
-          </mat-card-subtitle>
-        </mat-card-header>
-        
-        <mat-card-content>
-          <div class="upload-area">
-            <input
-              type="file"
-              id="resumeUpload"
-              accept=".pdf"
-              (change)="onFileSelected($event)"
-              style="display: none"
-            />
-            
-            <div class="file-upload-zone" (click)="openFileDialog()">
-              <mat-icon class="upload-icon">description</mat-icon>
-              <p class="upload-text">
-                {{ selectedFile ? selectedFile.name : 'Click to select a PDF resume' }}
-              </p>
-              <p class="upload-hint">Supported format: PDF (Max 10MB)</p>
-            </div>
-            
-            <div class="upload-actions" *ngIf="selectedFile">
-              <button
-                mat-raised-button
-                color="primary"
-                (click)="onUploadResume()"
-                [disabled]="isUploading"
-              >
-                <mat-icon>upload</mat-icon>
-                {{ isUploading ? 'Processing...' : 'Upload & Process' }}
-              </button>
-            </div>
-            
-            <mat-progress-bar
-              *ngIf="isUploading"
-              mode="determinate"
-              [value]="uploadProgress"
-              class="upload-progress"
-            ></mat-progress-bar>
-          </div>
-        </mat-card-content>
-      </mat-card>
+  <!-- Banner Section with Search -->
+  <div class="banner-section">
+    <div class="banner-content">
+      <h1 class="banner-title">Candidate Profiles</h1>
+      <p class="banner-subtitle">Find and manage candidate profiles with advanced search and filtering</p>
       
       <!-- Search Bar -->
       <div class="search-container">
-        <mat-form-field appearance="outline" class="search-field">
-          <mat-label>Search profiles...</mat-label>
-          <input
-            matInput
-            [(ngModel)]="searchTerm"
-            (input)="onSearchChange()"
-            placeholder="Search by name, role, skills, email..."
-          />
-          <mat-icon matSuffix>search</mat-icon>
-        </mat-form-field>
+        <div class="search-wrapper">
+          <div class="search-header">
+            <h3 class="search-title">Find Your Perfect Candidate</h3>
+            <p class="search-subtitle">Search through candidate profiles using keywords, skills, experience, or personal details</p>
+          </div>
+          
+          <div class="search-form">
+            <!-- Main Search Bar -->
+            <mat-form-field appearance="outline" class="search-field">
+              <mat-label>Search candidates...</mat-label>
+              <input
+                matInput
+                [(ngModel)]="searchTerm"
+                placeholder="Name, role, skills, email, or keywords..."
+                (keyup.enter)="searchCandidates()"
+              />
+              <mat-icon matPrefix class="search-prefix-icon">search</mat-icon>
+              <button mat-icon-button matSuffix *ngIf="searchTerm" (click)="clearSearch()" class="clear-button">
+                <mat-icon>close</mat-icon>
+              </button>
+            </mat-form-field>
+
+            <!-- Quick Search Button -->
+            <button 
+              mat-raised-button 
+              color="primary"
+              (click)="searchCandidates()"
+              class="quick-search-btn"
+              [disabled]="isLoading">
+              <mat-icon *ngIf="isLoading">hourglass_empty</mat-icon>
+              <mat-icon *ngIf="!isLoading">search</mat-icon>
+              {{ isLoading ? 'Searching...' : 'Search' }}
+            </button>
+
+            <!-- Advanced Filters Toggle -->
+            <div class="filter-toggle-section">
+              <button 
+                mat-stroked-button 
+                (click)="toggleAdvancedFilters()" 
+                class="toggle-filters-btn"
+                [class.active]="showAdvancedFilters">
+                <mat-icon>tune</mat-icon>
+                Advanced Filters
+                <mat-icon class="expand-icon" [class.rotated]="showAdvancedFilters">expand_more</mat-icon>
+              </button>
+              
+              <button 
+                mat-stroked-button 
+                (click)="resetFilters()" 
+                class="reset-filters" 
+                *ngIf="hasActiveFilters()">
+                <mat-icon>refresh</mat-icon>
+                Reset All Filters
+              </button>
+            </div>
+
+            <!-- Advanced Filters Panel -->
+            <mat-expansion-panel 
+              [expanded]="showAdvancedFilters" 
+              class="advanced-filters-panel"
+              hideToggle="true">
+              <form [formGroup]="filterForm" class="advanced-filters-form">
+                <div class="filters-grid">
+                  <!-- Candidate ID Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Candidate ID</mat-label>
+                    <input 
+                      matInput 
+                      formControlName="candidateId"
+                      placeholder="e.g., CAND001">
+                    <mat-icon matPrefix>fingerprint</mat-icon>
+                  </mat-form-field>
+
+                  <!-- First Name Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>First Name</mat-label>
+                    <input 
+                      matInput 
+                      formControlName="firstName"
+                      placeholder="e.g., John">
+                    <mat-icon matPrefix>person</mat-icon>
+                  </mat-form-field>
+
+                  <!-- Last Name Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Last Name</mat-label>
+                    <input 
+                      matInput 
+                      formControlName="lastName"
+                      placeholder="e.g., Doe">
+                    <mat-icon matPrefix>person</mat-icon>
+                  </mat-form-field>
+
+                  <!-- Email Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Email</mat-label>
+                    <input 
+                      matInput 
+                      formControlName="email"
+                      placeholder="e.g., john@example.com">
+                    <mat-icon matPrefix>email</mat-icon>
+                  </mat-form-field>
+
+                  <!-- Mobile Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Mobile</mat-label>
+                    <input 
+                      matInput 
+                      formControlName="mobile"
+                      placeholder="e.g., +1-555-0123">
+                    <mat-icon matPrefix>phone</mat-icon>
+                  </mat-form-field>
+
+                  <!-- Role Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Role</mat-label>
+                    <mat-select formControlName="role">
+                      <mat-option value="">All Roles</mat-option>
+                      <mat-option *ngFor="let role of allRoles" [value]="role">
+                        {{ role }}
+                      </mat-option>
+                    </mat-select>
+                    <mat-icon matPrefix>work</mat-icon>
+                  </mat-form-field>
+
+                  <!-- Total Experience Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Total Experience (Years)</mat-label>
+                    <input 
+                      matInput 
+                      type="number"
+                      formControlName="totalExperience"
+                      placeholder="e.g., 5">
+                    <mat-icon matPrefix>trending_up</mat-icon>
+                  </mat-form-field>
+
+                  <!-- Primary Skills Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Primary Skills</mat-label>
+                    <input 
+                      matInput 
+                      formControlName="primarySkills"
+                      placeholder="Separate with commas: Angular, React, TypeScript">
+                    <mat-icon matPrefix>code</mat-icon>
+                  </mat-form-field>
+
+                  <!-- Secondary Skills Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Secondary Skills</mat-label>
+                    <input 
+                      matInput 
+                      formControlName="secondarySkills"
+                      placeholder="Separate with commas: Git, Docker, AWS">
+                    <mat-icon matPrefix>build</mat-icon>
+                  </mat-form-field>
+
+                  <!-- Summary Filter -->
+                  <mat-form-field appearance="outline" class="filter-field">
+                    <mat-label>Profile Summary</mat-label>
+                    <input 
+                      matInput 
+                      formControlName="summary"
+                      placeholder="Keywords in summary...">
+                    <mat-icon matPrefix>description</mat-icon>
+                  </mat-form-field>
+                </div>
+
+                <!-- Filter Action Buttons -->
+                <div class="filter-actions">
+                  <button 
+                    mat-raised-button 
+                    color="primary" 
+                    (click)="applyFilters()" 
+                    class="apply-btn">
+                    <mat-icon>check</mat-icon>
+                    Apply Filters
+                  </button>
+                  
+                  <button 
+                    mat-stroked-button 
+                    (click)="resetFilters()" 
+                    class="reset-btn">
+                    <mat-icon>clear</mat-icon>
+                    Reset
+                  </button>
+                </div>
+              </form>
+            </mat-expansion-panel>
+          </div>
+          
+          <div class="search-stats" *ngIf="searchTerm || hasActiveFilters()">
+            <mat-icon class="stats-icon">info</mat-icon>
+            <span class="stats-text">
+              Found {{ totalItems }} {{ totalItems === 1 ? 'candidate' : 'candidates' }}
+              <span *ngIf="searchTerm"> for "<strong>{{ searchTerm }}</strong>"</span>
+              <span *ngIf="getActiveFilterCount() > 0"> with {{ getActiveFilterCount() }} filter(s) applied</span>
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -77,15 +214,20 @@
   <div class="table-section">
     <mat-card class="table-card">
       <mat-card-header>
-        <div class="header-content">
-          <div>
+        <div class="table-header">
+          <div class="table-title-section">
             <mat-card-title>Candidate Profiles</mat-card-title>
             <mat-card-subtitle>
-              Showing {{ paginatedProfiles.length }} of {{ totalItems }} profiles
+              <span *ngIf="!isLoading">Showing {{ candidates.length }} of {{ totalItems }} profiles</span>
+              <span *ngIf="isLoading">Loading candidates...</span>
             </mat-card-subtitle>
           </div>
-          <div class="header-actions">
-            <button mat-raised-button color="primary" (click)="navigateToCreate()" class="create-button">
+          <div class="table-actions">
+            <button 
+              mat-raised-button 
+              color="primary"
+              class="create-candidate-btn"
+              (click)="navigateToCreate()">
               <mat-icon>person_add</mat-icon>
               Create New Candidate
             </button>
@@ -95,14 +237,25 @@
 
       <mat-card-content>
         <div class="table-container">
-          <table mat-table [dataSource]="paginatedProfiles" class="profiles-table">
+          <div *ngIf="isLoading" class="loading-indicator">
+            <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+            <p class="loading-text">Searching candidates...</p>
+          </div>
+          
+          <div *ngIf="!isLoading && candidates.length === 0" class="no-results">
+            <mat-icon class="no-results-icon">search_off</mat-icon>
+            <h3>No candidates found</h3>
+            <p>Try adjusting your search criteria or filters</p>
+          </div>
+          
+          <table mat-table [dataSource]="candidates" class="profiles-table" *ngIf="!isLoading && candidates.length > 0">
             
             <!-- Candidate ID Column -->
             <ng-container matColumnDef="candidateId">
               <th mat-header-cell *matHeaderCellDef>Candidate ID</th>
               <td mat-cell *matCellDef="let profile" class="candidate-id">
-                <a (click)="viewCandidateDetails(profile.id)" class="candidate-id-link">
-                  {{ profile.id }}
+                <a (click)="viewCandidateDetails(profile.candidateID)" class="candidate-id-link">
+                  {{ profile.candidateID }}
                 </a>
               </td>
             </ng-container>
@@ -111,7 +264,7 @@
             <ng-container matColumnDef="candidateName">
               <th mat-header-cell *matHeaderCellDef>Candidate Name</th>
               <td mat-cell *matCellDef="let profile" class="candidate-name">
-                {{ profile.candidateName }}
+                {{ profile.fullName }}
               </td>
             </ng-container>
 
@@ -123,21 +276,11 @@
               </td>
             </ng-container>
 
-            <!-- ATS Score Column -->
-            <ng-container matColumnDef="atsScore">
-              <th mat-header-cell *matHeaderCellDef>ATS Score</th>
-              <td mat-cell *matCellDef="let profile" class="ats-score">
-                <span class="score-badge" [ngClass]="getAtsScoreClass(profile.atsScore)">
-                  {{ profile.atsScore }}%
-                </span>
-              </td>
-            </ng-container>
-
             <!-- Profile Summary Column -->
             <ng-container matColumnDef="profileSummary">
               <th mat-header-cell *matHeaderCellDef>Profile Summary</th>
               <td mat-cell *matCellDef="let profile" class="profile-summary">
-                {{ getTruncatedSummary(profile.profileSummary, 120) }}
+                {{ getTruncatedSummary(profile.summary, 120) }}
               </td>
             </ng-container>
 
@@ -145,7 +288,7 @@
             <ng-container matColumnDef="overallExperience">
               <th mat-header-cell *matHeaderCellDef>Experience</th>
               <td mat-cell *matCellDef="let profile" class="experience">
-                {{ profile.overallExperience }}
+                {{ profile.totalExperience }} years
               </td>
             </ng-container>
 
@@ -193,8 +336,8 @@
             <ng-container matColumnDef="mobileNumber">
               <th mat-header-cell *matHeaderCellDef>Mobile</th>
               <td mat-cell *matCellDef="let profile" class="mobile">
-                <a [href]="'tel:' + profile.mobileNumber" class="phone-link">
-                  {{ profile.mobileNumber }}
+                <a [href]="'tel:' + profile.mobile" class="phone-link">
+                  {{ profile.mobile }}
                 </a>
               </td>
             </ng-container>

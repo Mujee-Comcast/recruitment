@@ -12,11 +12,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 import java.util.Map;
 import java.util.HashMap;
 
 @RestController
 @RequestMapping("/api/search")
+@Tag(name = "Search Services", description = "APIs for advanced search functionality")
 public class SearchController {
 
     @Autowired
@@ -26,14 +29,19 @@ public class SearchController {
     private int defaultSize;
 
     @PostMapping("/candidate")
-    public ResponseEntity<Map<String, Object>> searchCandidates(@RequestBody CandidateSearchRequest request) {
+    public ResponseEntity<Map<String, Object>> searchCandidates(
+            @RequestBody CandidateSearchRequest request) {
         try {
-            int pageNumber = request.getPageNumber() != null && request.getPageNumber() >= 0 ? request.getPageNumber() : 0;
-            int itemsPerPage = request.getItemsPerPage() != null && request.getItemsPerPage() > 0 ? request.getItemsPerPage() : defaultSize;
+            int pageNumber = request.getPageNumber() != null && request.getPageNumber() >= 0 ? request.getPageNumber()
+                    : 0;
+            int itemsPerPage = request.getItemsPerPage() != null && request.getItemsPerPage() > 0
+                    ? request.getItemsPerPage()
+                    : defaultSize;
             itemsPerPage = Math.min(itemsPerPage, 100);
 
-            CandidateSearchResult searchResult = searchService.searchCandidatesAdvanced(request, pageNumber, itemsPerPage);
-            
+            CandidateSearchResult searchResult = searchService.searchCandidatesAdvanced(request, pageNumber,
+                    itemsPerPage);
+
             Map<String, Object> response = new HashMap<>();
             response.put("results", searchResult.getResults());
             response.put("total", searchResult.getTotal());
@@ -46,7 +54,7 @@ public class SearchController {
             response.put("searchKey", request.getSearchKey());
             response.put("sortField", request.getSortField());
             response.put("sortOrder", request.getSortOrder());
-            
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();
@@ -57,14 +65,18 @@ public class SearchController {
     }
 
     @PostMapping("/vacancy")
-    public ResponseEntity<Map<String, Object>> searchVacancies(@RequestBody VacancySearchRequest request) {
+    public ResponseEntity<Map<String, Object>> searchVacancies(
+            @RequestBody VacancySearchRequest request) {
         try {
-            int pageNumber = request.getPageNumber() != null && request.getPageNumber() >= 0 ? request.getPageNumber() : 0;
-            int itemsPerPage = request.getItemsPerPage() != null && request.getItemsPerPage() > 0 ? request.getItemsPerPage() : defaultSize;
+            int pageNumber = request.getPageNumber() != null && request.getPageNumber() >= 0 ? request.getPageNumber()
+                    : 0;
+            int itemsPerPage = request.getItemsPerPage() != null && request.getItemsPerPage() > 0
+                    ? request.getItemsPerPage()
+                    : defaultSize;
             itemsPerPage = Math.min(itemsPerPage, 100);
 
             VacancySearchResult searchResult = searchService.searchVacanciesAdvanced(request, pageNumber, itemsPerPage);
-            
+
             Map<String, Object> response = new HashMap<>();
             response.put("results", searchResult.getResults());
             response.put("total", searchResult.getTotal());
@@ -77,7 +89,7 @@ public class SearchController {
             response.put("searchKey", request.getSearchKey());
             response.put("sortField", request.getSortField());
             response.put("sortOrder", request.getSortOrder());
-            
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             Map<String, Object> errorResponse = new HashMap<>();

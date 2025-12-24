@@ -1,6 +1,6 @@
 .navigation {
-  background: linear-gradient(90deg, #1976d2 0%, #1565c0 100%);
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  background: linear-gradient(90deg, #3c19d2 0%, #bd15c0 100%);
+  box-shadow: 0 8px 8px rgba(0, 0, 0, 0.2);
   position: sticky;
   top: 0;
   z-index: 1000;
@@ -31,51 +31,17 @@
 
 .nav-links {
   display: flex;
-  gap: 8px;
-  
-  a {
-    color: rgba(255, 255, 255, 0.9);
-    border-radius: 8px;
-    font-weight: 500;
-    transition: all 0.3s ease;
-    
-    mat-icon {
-      margin-right: 8px;
-      font-size: 1.2rem;
-    }
-    
-    &:hover {
-      background-color: rgba(255, 255, 255, 0.1);
-      color: white;
-    }
-    
-    &.active {
-      background-color: rgba(255, 255, 255, 0.2);
-      color: white;
-    }
-  }
-}
+  padding: 8px;
 
-@media (max-width: 768px) {
-  .nav-container {
-    padding: 0 15px;
-    height: 56px;
-  }
-  
-  .nav-brand {
-    font-size: 1rem;
-    
-    span {
-      display: none;
+    .menu-btn {
+      background: transparent;
+      border: none;
+      color: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      margin: 0 10px;
+      &:active, &:focus {
+        outline: none;
+      }
     }
-  }
-  
-  .nav-links a {
-    padding: 8px 12px;
-    
-    mat-icon {
-      margin-right: 4px;
-      font-size: 1.1rem;
-    }
-  }
 }
